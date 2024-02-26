@@ -1,28 +1,86 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
-	"lucid.frame/protobufs"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"lucid.frame/frame"
+	"lucid.frame/neynar"
 )
 
-func main() {
+// nft item id can be in the url
+// us the item id to c
 
+// TODO:
+// -  extract frame id from url
+// -  fetch frame details and return a frame with given details
+// -  parse frame action and execute action
+
+var DB *gorm.DB
+
+func main() {
+	godotenv.Load()
+
+	DB, _ = SetupDatabase()
+
+	port := os.Getenv("PORT")
+	r := mux.NewRouter()
+	r.HandleFunc("/{frame}", frameHandler())
+	r.HandleFunc("/createframe", createFrameHandler())
+	fmt.Printf("Lucid frame server starting on port %v \n", port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
+func returnFrame(w http.ResponseWriter, imageUrl, title string) {
+	w.Header().Set("Content-Type", "text/html")
+	// Write the HTML meta tags to the response
+	frameBtn := frame.Button(title)
+
+	ogFrame := frame.ParseFrame(imageUrl, frameBtn)
+	fmt.Fprint(w, ogFrame)
 }
 
 func frameHandler() http.HandlerFunc {
 	type reqBody struct {
-		UntrustedData map[string]any    `json:"untrustedData`
-		TrustedData   map[string]string `json:"trustedData`
+		UntrustedData map[string]any    `json:"untrustedData"`
+		TrustedData   map[string]string `json:"trustedData"`
 	}
+	neynarApiKey := os.Getenv("NEYNAR_API_KEY")
 	return func(w http.ResponseWriter, r *http.Request) {
+		neynarClient, err := neynar.NewNeynarClient(neynar.WithApiKey(neynarApiKey))
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("an unexpected error occured"))
+			return
+		}
 
-		// print hello world
+		vars := mux.Vars(r)
+		id, ok := vars["frame"]
+		if !ok {
+			fmt.Println("id is missing in parameters")
+		}
+
+		frameDetails, err := frame.GetFrameDetails(id, DB)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("an unexpected error occured"))
+			return
+		}
+		imageUrl := frameDetails.ImageUrl
+		item := frameDetails.ItemId
+
 		switch r.Method {
+		case http.MethodGet:
+			returnFrame(w, imageUrl, string(frame.ClaimButton))
 		case http.MethodPost:
 			frameReqBody := reqBody{}
 			err := json.NewDecoder(r.Body).Decode(&frameReqBody)
@@ -30,56 +88,102 @@ func frameHandler() http.HandlerFunc {
 				log.Printf("error decoding request body %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte("an unexpected error occured"))
+				return
 			}
 
 			msgData := frameReqBody.TrustedData["messageBytes"]
-			fmt.Println("messageBytes: ", msgData)
-			message, err := validateFrameData(msgData)
+
+			type validationBody struct {
+				CastReactionContext bool   `json:"cast_reaction_context"`
+				FollowContext       bool   `json:"follow_context"`
+				MessageBytesInHex   string `json:"message_bytes_in_hex"`
+			}
+
+			vBody := validationBody{true, false, msgData}
+			msgDataBytes, err := json.Marshal(vBody)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("an unexpected error occured"))
+				return
+			}
+
+			action, err := neynarClient.ValidateFrameMessage(msgDataBytes)
 			if err != nil {
 				log.Printf("error validating frame %v", err)
 				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte("invalid frame message"))
+				return
 			}
 
-			fmt.Println(message)
+			if len(action.Interactor.VerifiedAdresses.EthAddresses) == 0 {
+				err := neynar.ErrNoVerifications
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			verifiedEthAddress := action.Interactor.VerifiedAdresses.EthAddresses[0]
+			buttonTitle := action.TappedButton.Title
+			button := frame.Button(buttonTitle)
+			buttonIdx := action.TappedButton.Index
+
+			switch buttonIdx {
+			case 1:
+				// claim
+				err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				returnFrame(w, imageUrl, string(frame.PromptButton))
+			}
+			// parseFrameAction(message)
 		}
 	}
 }
 
-func validateFrameData(data string) (*protobufs.Message, error) {
-	responseBody := protobufs.ValidationResponse{}
-	msgDataBytes := []byte(data)
+func createFrameHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		urlValues := r.URL.Query()
+		itemId := urlValues.Get("itemId")
+		imageUrl := urlValues.Get("imageUrl")
 
-	url := "https://nemes.farcaster.xyz:2281/v1/validateMessage"
+		frameId, err := frame.CreateClaimFrame(itemId, imageUrl, DB)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 
-	resp, err := http.Post(url, "application/octet-stream", bytes.NewBuffer(msgDataBytes))
+		baseurl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/claim/%v", baseurl, frameId)
+
+		fmt.Println(url)
+
+		if err := json.NewEncoder(w).Encode(url); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}
+}
+
+func SetupDatabase() (*gorm.DB, error) {
+	// ...
+	dsn := os.Getenv("DATABASE_URL")
+	fmt.Println("Connecting to database")
+	dialector := postgres.Open(dsn)
+
+	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
-		log.Printf("failed to send POST request: %v", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("successfully sent message")
-	} else {
-		fmt.Printf("Failed to send the message. HTTP status: %d\n", resp.StatusCode)
+		fmt.Println("Error connecting to database")
 		return nil, err
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&responseBody)
-	if err != nil {
-		log.Printf("Failed to decode response body: %v", err)
-		return nil, err
+	// ...
+	if err = db.AutoMigrate(frame.ClaimFrame{}); err != nil {
+		log.Println("Error migrating database models")
 	}
 
-	if !responseBody.Valid {
-		fmt.Println("message is invalid")
-		return nil, err
-	}
-
-	message := responseBody.Message
-	// validate url
-	// urlBuffer := message.Data.GetFrameActionBody().Url
-
-	// urlString := hexutil.Encode(urlBuffer)
-	return message, nil
+	return db, nil
 }
