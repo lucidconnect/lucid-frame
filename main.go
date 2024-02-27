@@ -32,7 +32,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	r := mux.NewRouter()
-	r.HandleFunc("/{frame}", frameHandler())
+	r.HandleFunc("/frame/{frame}", frameHandler())
 	r.HandleFunc("/createframe", createFrameHandler())
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
