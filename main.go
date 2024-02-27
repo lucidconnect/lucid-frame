@@ -124,33 +124,56 @@ func frameHandler() http.HandlerFunc {
 			}
 
 			verifiedEthAddress := action.Interactor.VerifiedAdresses.EthAddresses[0]
-			buttonTitle := action.TappedButton.Title
+			buttonTitle := action.Cast.Frames[0].Buttons[0].Title
+			// buttonTitle := "claim"
+			uv := r.URL.Query()
+			claimed := uv.Get("claimed")
+			if claimed == "true" {
+				buttonTitle = "make your own @ inverse.xyz"
+			}
 			button := frame.Button(buttonTitle)
 			buttonIdx := action.TappedButton.Index
-
+			fmt.Printf("button %v clicked", buttonIdx)
 			switch buttonIdx {
 			case 1:
 				// claim
-				err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				fmt.Println("Button: ", button)
+				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				returnFrame(w, imageUrl, string(frame.PromptButton))
+				fmt.Println("Response: ", response)
+				if button == frame.PromptButton {
+					http.Redirect(w, r, response, http.StatusFound)
+					return
+				}
+				image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
+				returnFrame(w, image, string(frame.PromptButton))
 			}
 			// parseFrameAction(message)
+
 		}
 	}
 }
 
+type createFrameRequest struct {
+	ItemId     string `json:"itemId"`
+	ImageUrl   string `json:"imageUrl"`
+	Collection string `json:"collection"`
+}
+
 func createFrameHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		urlValues := r.URL.Query()
-		itemId := urlValues.Get("itemId")
-		imageUrl := urlValues.Get("imageUrl")
+		var createFrameReq createFrameRequest
+		req := r.Body
+		json.NewDecoder(req).Decode(&createFrameReq)
+		itemId := createFrameReq.ItemId
+		imageUrl := createFrameReq.ImageUrl
+		collectionAddr := createFrameReq.Collection
 
-		frameId, err := frame.CreateClaimFrame(itemId, imageUrl, DB)
+		frameId, err := frame.CreateClaimFrame(itemId, imageUrl, collectionAddr, DB)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)

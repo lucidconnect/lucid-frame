@@ -31,21 +31,23 @@ var (
 	ClaimButton       Button = "claim"
 	RefreshBotton     Button = "refresh"
 	TransactionButton Button = "view tx"
-	PromptButton Button = "make your own @ inverse.xyz"
+	PromptButton      Button = "make your own @ inverse.xyz"
 )
 
 type ClaimFrame struct {
-	ID       uuid.UUID `gorm:"primaryKey"`
-	ItemId   string
-	ImageUrl string
+	ID                uuid.UUID `gorm:"primaryKey"`
+	ItemId            string
+	ImageUrl          string
+	CollectionAddress string
 }
 
-func CreateClaimFrame(itemId, imageUrl string, db *gorm.DB) (string, error) {
+func CreateClaimFrame(itemId, imageUrl, collectionAddr string, db *gorm.DB) (string, error) {
 	id := uuid.New()
 	frame := ClaimFrame{
 		ID:       id,
 		ItemId:   itemId,
 		ImageUrl: imageUrl,
+		CollectionAddress: collectionAddr,
 	}
 
 	if err := db.Create(frame).Error; err != nil {
@@ -83,7 +85,7 @@ func ParseFrame(imageUrl string, title Button) string {
 			<meta property="og:image" content="%v">
 			<meta property="fc:frame" content="vNext" />
 			<meta property="fc:frame:image" content="%v" />
-			<meta property="fc:frame:button:1:post" content="%v" />
+			<meta property="fc:frame:button:1" content="%v" />
 			<title></title>
 		</head>
 		<body>
@@ -94,6 +96,8 @@ func ParseFrame(imageUrl string, title Button) string {
 	case "refresh":
 	case "view tx":
 	case PromptButton:
+		// on redirect, server should respond with a 302 and redirect to a set url
+		url := "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
 		frame = fmt.Sprintf(`
 		<!DOCTYPE html>
 		<html>
@@ -104,33 +108,41 @@ func ParseFrame(imageUrl string, title Button) string {
 			<meta property="og:image" content="%v">
 			<meta property="fc:frame" content="vNext" />
 			<meta property="fc:frame:image" content="%v" />
-			<meta property="fc:frame:button:1:post-redirect" content="%v" />
+			<meta property="fc:frame:button:1" content="%v" />
+			<meta property="fc:frame:button:1:action" content="post_redirect" />
+			<meta property="fc:frame:post_url" content="%v" />
 			<title></title>
 		</head>
 		<body>
 			<h1>Inverse</h1>
 		</body>
 		</html>
-		`, imageUrl, imageUrl, string(title))
+		`, imageUrl, imageUrl, title, url)
 
 	}
 
 	return frame
 }
 
-func ParseFrameAction(btn Button, item, verifiedAddress string) error {
+func ParseFrameAction(btn Button, item, verifiedAddress string) (string, error) {
+	var response string
+	fmt.Println(btn)
 	switch btn {
 	case ClaimButton:
-		err := ClaimItem(item, verifiedAddress)
-		if err != nil {
-			return err
-		}
+		// err := ClaimItem(item, verifiedAddress)
+		// if err != nil {
+		// 	return "", err
+		// }
+		response = "claim succesful"
 	case RefreshBotton:
 		// refresh
 	case TransactionButton:
 		// view transaction
+	case PromptButton:
+		// return a 302
+		response = "https://inverse.wtf"
 	}
-	return nil
+	return response, nil
 }
 
 func CalculateCounterFactualAddress(farcasterSigner, kernelFactoryAddress, rpc string) (string, error) {
