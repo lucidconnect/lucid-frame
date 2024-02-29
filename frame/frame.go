@@ -124,10 +124,10 @@ func ParseFrameAction(btn Button, item, verifiedAddress string) (string, error) 
 	fmt.Println(btn)
 	switch btn {
 	case ClaimButton:
-		// err := ClaimItem(item, verifiedAddress)
-		// if err != nil {
-		// 	return "", err
-		// }
+		err := ClaimItem(item, verifiedAddress)
+		if err != nil {
+			return "", err
+		}
 		response = "claim succesful"
 	case RefreshBotton:
 		// refresh
