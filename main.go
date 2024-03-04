@@ -187,7 +187,11 @@ func createFrameHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createFrameReq createFrameRequest
 		req := r.Body
-		json.NewDecoder(req).Decode(&createFrameReq)
+		if err := json.NewDecoder(req).Decode(&createFrameReq); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		itemId := createFrameReq.ItemId
 		imageUrl := createFrameReq.ImageUrl
 		collectionAddr := createFrameReq.Collection
@@ -196,6 +200,7 @@ func createFrameHandler() http.HandlerFunc {
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		baseurl := os.Getenv("BASE_URL")
@@ -206,6 +211,7 @@ func createFrameHandler() http.HandlerFunc {
 		if err := json.NewEncoder(w).Encode(url); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	}
 }
