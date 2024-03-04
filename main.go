@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"lucid.frame/frame"
@@ -32,6 +33,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	r := mux.NewRouter()
+	loadCORS(r)
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
@@ -39,6 +41,19 @@ func main() {
 	r.HandleFunc("/createframe", createFrameHandler())
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
+func loadCORS(router *mux.Router) {
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins: []string{"https://*", "http://*", "ws://*", "wss://*", "*"},
+		AllowedMethods: []string{
+			http.MethodOptions,
+			http.MethodGet,
+			http.MethodPost,
+		},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: false,
+	}).Handler)
 }
 
 func returnFrame(w http.ResponseWriter, imageUrl, title string) {
