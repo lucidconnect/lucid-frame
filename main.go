@@ -44,7 +44,7 @@ func main() {
 }
 
 func loadCORS(router *mux.Router) {
-	allowedOrigins := []string{"*", "http://localhost:3000", "https://lucid-v2.vercel.app/"}
+	allowedOrigins := []string{"*", "localhost:3000", "https://lucid-v2.vercel.app/"}
 	c := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{
