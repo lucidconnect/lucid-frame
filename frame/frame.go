@@ -140,7 +140,7 @@ func ParseFrameAction(btn Button, item, verifiedAddress string) (string, error) 
 		// view transaction
 	case PromptButton:
 		// return a 302
-		response = "https://inverse.wtf"
+		response = os.Getenv("LUCID_LANDING_PAGE")
 	}
 	return response, nil
 }

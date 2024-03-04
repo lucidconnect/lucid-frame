@@ -148,11 +148,11 @@ func frameHandler() http.HandlerFunc {
 			uv := r.URL.Query()
 			claimed := uv.Get("claimed")
 			if claimed == "true" {
-				buttonTitle = "make your own @ inverse.xyz"
+				buttonTitle = "make your own @"
 			}
 			button := frame.Button(buttonTitle)
 			buttonIdx := action.TappedButton.Index
-			fmt.Printf("button %v clicked", buttonIdx)
+			fmt.Printf("button %v clicked \n", buttonIdx)
 			switch buttonIdx {
 			case 1:
 				// claim
