@@ -33,12 +33,12 @@ func main() {
 
 	port := os.Getenv("PORT")
 	r := mux.NewRouter()
-	loadCORS(r)
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
 	r.HandleFunc("/frame/{frame}", frameHandler())
 	r.HandleFunc("/createframe", createFrameHandler()).Methods(http.MethodPost)
+	loadCORS(r)
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
