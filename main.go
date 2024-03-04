@@ -44,8 +44,9 @@ func main() {
 }
 
 func loadCORS(router *mux.Router) {
-	router.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*", "http://localhost:3000"},
+	allowedOrigins := []string{"https://*", "http://*", "http://localhost:3000"}
+	c := cors.New(cors.Options{
+		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{
 			http.MethodOptions,
 			http.MethodGet,
@@ -53,7 +54,8 @@ func loadCORS(router *mux.Router) {
 		},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: false,
-	}).Handler)
+	})
+	router.Use(c.Handler)
 }
 
 func returnFrame(w http.ResponseWriter, frameId, imageUrl, title string) {
