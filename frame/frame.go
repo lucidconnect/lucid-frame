@@ -60,6 +60,7 @@ func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
 	var frameDetails *ClaimFrame
 	uid, err := uuid.Parse(id)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -99,7 +100,7 @@ func ParseFrame(imageUrl, frameId string, title Button) string {
 		landingPage := os.Getenv("LUCID_LANDING_PAGE")
 		title = Button(fmt.Sprintf("%v - %v", title, landingPage))
 		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/%v?claimed=true", baseUrl, frameId)
+		url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
 		// "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
 		frame = fmt.Sprintf(`
 		<!DOCTYPE html>

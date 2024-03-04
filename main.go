@@ -37,9 +37,8 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
-	r.HandleFunc("/{frame}", frameHandler())
-	r.HandleFunc("/claim/{frame}", frameHandler())
-	r.HandleFunc("/createframe", createFrameHandler())
+	r.HandleFunc("/frame/{frame}", frameHandler())
+	r.HandleFunc("/createframe", createFrameHandler()).Methods(http.MethodPost)
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
@@ -188,7 +187,7 @@ func createFrameHandler() http.HandlerFunc {
 		var createFrameReq createFrameRequest
 		req := r.Body
 		if err := json.NewDecoder(req).Decode(&createFrameReq); err != nil {
-			log.Println(err)
+			log.Println("error occured decoding request",err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -204,7 +203,7 @@ func createFrameHandler() http.HandlerFunc {
 		}
 
 		baseurl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/claim/%v", baseurl, frameId)
+		url := fmt.Sprintf("%v/frame/%v", baseurl, frameId)
 
 		fmt.Println(url)
 
