@@ -45,7 +45,7 @@ func main() {
 
 func loadCORS(router *mux.Router) {
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*", "ws://*", "wss://*", "*"},
+		AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedMethods: []string{
 			http.MethodOptions,
 			http.MethodGet,
