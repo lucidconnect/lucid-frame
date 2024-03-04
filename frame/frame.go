@@ -2,6 +2,7 @@ package frame
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/google/uuid"
@@ -45,8 +46,10 @@ func CreateClaimFrame(itemId, imageUrl, collectionAddr string, db *gorm.DB) (str
 		ImageUrl:          imageUrl,
 		CollectionAddress: collectionAddr,
 	}
+	fmt.Println(id)
 
 	if err := db.Create(frame).Error; err != nil {
+		log.Println(err)
 		return "", err
 	}
 
