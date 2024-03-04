@@ -37,7 +37,7 @@ func main() {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
 	r.HandleFunc("/frame/{frame}", frameHandler())
-	r.HandleFunc("/createframe", createFrameHandler()).Methods(http.MethodPost)
+	r.HandleFunc("/createframe", createFrameHandler())
 	loadCORS(r)
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
