@@ -37,6 +37,7 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
+	r.HandleFunc("/{frame}", frameHandler())
 	r.HandleFunc("/claim/{frame}", frameHandler())
 	r.HandleFunc("/createframe", createFrameHandler())
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
@@ -56,12 +57,12 @@ func loadCORS(router *mux.Router) {
 	}).Handler)
 }
 
-func returnFrame(w http.ResponseWriter, imageUrl, title string) {
+func returnFrame(w http.ResponseWriter, frameId, imageUrl, title string) {
 	w.Header().Set("Content-Type", "text/html")
 	// Write the HTML meta tags to the response
 	frameBtn := frame.Button(title)
 
-	ogFrame := frame.ParseFrame(imageUrl, frameBtn)
+	ogFrame := frame.ParseFrame(imageUrl, frameId, frameBtn)
 	fmt.Fprint(w, ogFrame)
 }
 
@@ -81,12 +82,12 @@ func frameHandler() http.HandlerFunc {
 		}
 
 		vars := mux.Vars(r)
-		id, ok := vars["frame"]
+		frmaeId, ok := vars["frame"]
 		if !ok {
 			fmt.Println("id is missing in parameters")
 		}
 
-		frameDetails, err := frame.GetFrameDetails(id, DB)
+		frameDetails, err := frame.GetFrameDetails(frmaeId, DB)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -98,7 +99,7 @@ func frameHandler() http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodGet:
-			returnFrame(w, imageUrl, string(frame.ClaimButton))
+			returnFrame(w, frmaeId, imageUrl, string(frame.ClaimButton))
 		case http.MethodPost:
 			frameReqBody := reqBody{}
 			err := json.NewDecoder(r.Body).Decode(&frameReqBody)
@@ -168,7 +169,7 @@ func frameHandler() http.HandlerFunc {
 					return
 				}
 				image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
-				returnFrame(w, image, string(frame.PromptButton))
+				returnFrame(w, frmaeId, image, string(frame.PromptButton))
 			}
 			// parseFrameAction(message)
 

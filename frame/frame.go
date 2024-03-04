@@ -2,6 +2,7 @@ package frame
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 
@@ -26,7 +27,7 @@ var (
 	ClaimButton       Button = "claim"
 	RefreshBotton     Button = "refresh"
 	TransactionButton Button = "view tx"
-	PromptButton      Button = "make your own @ inverse.xyz"
+	PromptButton      Button = "make your own @"
 )
 
 type ClaimFrame struct {
@@ -66,7 +67,7 @@ func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
 	return frameDetails, nil
 }
 
-func ParseFrame(imageUrl string, title Button) string {
+func ParseFrame(imageUrl, frameId string, title Button) string {
 	var frame string
 	switch title {
 	case ClaimButton:
@@ -92,7 +93,11 @@ func ParseFrame(imageUrl string, title Button) string {
 	case "view tx":
 	case PromptButton:
 		// on redirect, server should respond with a 302 and redirect to a set url
-		url := "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
+		landingPage := os.Getenv("LUCID_LANDING_PAGE")
+		title = Button(fmt.Sprintf("%v - %v", title, landingPage))
+		baseUrl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/%v?claimed=true", baseUrl, frameId)
+		// "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
 		frame = fmt.Sprintf(`
 		<!DOCTYPE html>
 		<html>
