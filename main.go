@@ -33,20 +33,21 @@ func main() {
 
 	port := os.Getenv("PORT")
 	r := mux.NewRouter()
-	loadCORS(r)
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
-	r.HandleFunc("/{frame}", frameHandler())
-	r.HandleFunc("/claim/{frame}", frameHandler())
+	loadCORS(r)
+	r.HandleFunc("/frame/{frame}", frameHandler())
 	r.HandleFunc("/createframe", createFrameHandler())
+	r.HandleFunc("/getframe", fetchFrameHandler())
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
 func loadCORS(router *mux.Router) {
-	router.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*", "ws://*", "wss://*", "*"},
+	allowedOrigins := []string{"*", "localhost:3000", "https://lucid-v2.vercel.app/"}
+	c := cors.New(cors.Options{
+		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{
 			http.MethodOptions,
 			http.MethodGet,
@@ -54,7 +55,8 @@ func loadCORS(router *mux.Router) {
 		},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: false,
-	}).Handler)
+	})
+	router.Use(c.Handler)
 }
 
 func returnFrame(w http.ResponseWriter, frameId, imageUrl, title string) {
@@ -187,7 +189,11 @@ func createFrameHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createFrameReq createFrameRequest
 		req := r.Body
-		json.NewDecoder(req).Decode(&createFrameReq)
+		if err := json.NewDecoder(req).Decode(&createFrameReq); err != nil {
+			log.Println("error occured decoding request", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		itemId := createFrameReq.ItemId
 		imageUrl := createFrameReq.ImageUrl
 		collectionAddr := createFrameReq.Collection
@@ -196,16 +202,49 @@ func createFrameHandler() http.HandlerFunc {
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		baseurl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/claim/%v", baseurl, frameId)
+		url := fmt.Sprintf("%v/frame/%v", baseurl, frameId)
 
 		fmt.Println(url)
 
 		if err := json.NewEncoder(w).Encode(url); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+// serves requests of the form /getframe?itemId
+func fetchFrameHandler() http.HandlerFunc {
+	type frameObject struct {
+		ItemId string `json:"itemId"`
+		Url    string `json:"url"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		itemId := r.URL.Query().Get("itemId")
+		frameDetail, err := frame.GetFrameByItemId(itemId, DB)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		baseurl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/frame/%v", baseurl, frameDetail.ID)
+
+		response := frameObject{
+			ItemId: itemId,
+			Url: url,
+		}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	}
 }

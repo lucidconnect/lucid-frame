@@ -2,6 +2,7 @@ package frame
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/google/uuid"
@@ -38,29 +39,47 @@ type ClaimFrame struct {
 }
 
 func CreateClaimFrame(itemId, imageUrl, collectionAddr string, db *gorm.DB) (string, error) {
-	id := uuid.New()
-	frame := ClaimFrame{
-		ID:                id,
-		ItemId:            itemId,
-		ImageUrl:          imageUrl,
-		CollectionAddress: collectionAddr,
+	// check if a frame already exists
+	frameDetail, err := GetFrameByItemId(itemId, db)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			id := uuid.New()
+			frame := ClaimFrame{
+				ID:                id,
+				ItemId:            itemId,
+				ImageUrl:          imageUrl,
+				CollectionAddress: collectionAddr,
+			}
+			err := db.Create(frame).Error
+			if err != nil {
+				log.Println(err)
+				return "", err
+			}
+			return id.String(), nil
+		}
 	}
 
-	if err := db.Create(frame).Error; err != nil {
-		return "", err
-	}
-
-	return id.String(), nil
+	return frameDetail.ID.String(), nil
 }
 
 func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
 	var frameDetails *ClaimFrame
 	uid, err := uuid.Parse(id)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
 	if err := db.Where("id = ?", uid).First(&frameDetails).Error; err != nil {
+		return nil, err
+	}
+
+	return frameDetails, nil
+}
+
+func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
+	var frameDetails *ClaimFrame
+	if err := db.Where("item_id = ?", itemId).First(&frameDetails).Error; err != nil {
 		return nil, err
 	}
 
@@ -96,7 +115,7 @@ func ParseFrame(imageUrl, frameId string, title Button) string {
 		landingPage := os.Getenv("LUCID_LANDING_PAGE")
 		title = Button(fmt.Sprintf("%v - %v", title, landingPage))
 		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/%v?claimed=true", baseUrl, frameId)
+		url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
 		// "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
 		frame = fmt.Sprintf(`
 		<!DOCTYPE html>
