@@ -36,9 +36,10 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, fmt.Sprintln("Frame Server"))
 	})
+	loadCORS(r)
 	r.HandleFunc("/frame/{frame}", frameHandler())
 	r.HandleFunc("/createframe", createFrameHandler())
-	loadCORS(r)
+	r.HandleFunc("/getframe", fetchFrameHandler())
 	fmt.Printf("Lucid frame server starting on port %v \n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
@@ -189,7 +190,7 @@ func createFrameHandler() http.HandlerFunc {
 		var createFrameReq createFrameRequest
 		req := r.Body
 		if err := json.NewDecoder(req).Decode(&createFrameReq); err != nil {
-			log.Println("error occured decoding request",err)
+			log.Println("error occured decoding request", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -210,6 +211,37 @@ func createFrameHandler() http.HandlerFunc {
 		fmt.Println(url)
 
 		if err := json.NewEncoder(w).Encode(url); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+// serves requests of the form /getframe?itemId
+func fetchFrameHandler() http.HandlerFunc {
+	type frameObject struct {
+		ItemId string `json:"itemId"`
+		Url    string `json:"url"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		itemId := r.URL.Query().Get("itemId")
+		frameDetail, err := frame.GetFrameByItemId(itemId, DB)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		baseurl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/frame/%v", baseurl, frameDetail.ID)
+
+		response := frameObject{
+			ItemId: itemId,
+			Url: url,
+		}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return

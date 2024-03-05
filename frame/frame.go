@@ -71,6 +71,15 @@ func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
 	return frameDetails, nil
 }
 
+func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
+	var frameDetails *ClaimFrame
+	if err := db.Where("item_id = ?", itemId).First(&frameDetails).Error; err != nil {
+		return nil, err
+	}
+
+	return frameDetails, nil
+}
+
 func ParseFrame(imageUrl, frameId string, title Button) string {
 	var frame string
 	switch title {
