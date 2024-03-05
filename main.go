@@ -229,7 +229,7 @@ func fetchFrameHandler() http.HandlerFunc {
 		frameDetail, err := frame.GetFrameByItemId(itemId, DB)
 		if err != nil {
 			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
