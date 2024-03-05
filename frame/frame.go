@@ -39,21 +39,27 @@ type ClaimFrame struct {
 }
 
 func CreateClaimFrame(itemId, imageUrl, collectionAddr string, db *gorm.DB) (string, error) {
-	id := uuid.New()
-	frame := ClaimFrame{
-		ID:                id,
-		ItemId:            itemId,
-		ImageUrl:          imageUrl,
-		CollectionAddress: collectionAddr,
+	// check if a frame already exists
+	frameDetail, err := GetFrameByItemId(itemId, db)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			id := uuid.New()
+			frame := ClaimFrame{
+				ID:                id,
+				ItemId:            itemId,
+				ImageUrl:          imageUrl,
+				CollectionAddress: collectionAddr,
+			}
+			err := db.Create(frame).Error
+			if err != nil {
+				log.Println(err)
+				return "", err
+			}
+			return id.String(), nil
+		}
 	}
-	fmt.Println(id)
 
-	if err := db.Create(frame).Error; err != nil {
-		log.Println(err)
-		return "", err
-	}
-
-	return id.String(), nil
+	return frameDetail.ID.String(), nil
 }
 
 func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
