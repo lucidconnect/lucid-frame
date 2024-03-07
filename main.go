@@ -70,6 +70,7 @@ func returnFrame(w http.ResponseWriter, frameId, imageUrl, txUrl string, buttons
 	// btns = append(btns, frameBtn)
 
 	ogFrame := frame.ParseFrame(imageUrl, frameId, txUrl, buttons...)
+	fmt.Println(ogFrame)
 	fmt.Fprint(w, ogFrame)
 }
 
