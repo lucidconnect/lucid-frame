@@ -83,11 +83,13 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 
 	claimer := common.HexToAddress(claimAddress)
 	contract := common.HexToAddress(signatureResponse.SmartContractAddress)
-	var amount, tokenId, nonce *big.Int
 
-	amount.SetString(signatureResponse.Amount, 10)
-	tokenId.SetString(signatureResponse.TokenID, 10)
-	nonce.SetString(signatureResponse.Nonce, 10)
+	amount, _ := new(big.Int).SetString(signatureResponse.Amount, 10)
+	tokenId, _ := new(big.Int).SetString(signatureResponse.TokenID, 10)
+	nonce, _ := new(big.Int).SetString(signatureResponse.Nonce, 10)
+	// amount.SetString(signatureResponse.Amount, 10)
+	// tokenId.SetString(signatureResponse.TokenID, 10)
+	// nonce.SetString(signatureResponse.Nonce, 10)
 	signature, err := hex.DecodeString(signatureResponse.MintingSignature)
 	if err != nil {
 		log.Println(err)
