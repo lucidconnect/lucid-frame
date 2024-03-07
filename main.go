@@ -23,6 +23,7 @@ import (
 // -  extract frame id from url
 // -  fetch frame details and return a frame with given details
 // -  parse frame action and execute action
+// abigen --abi abi/lucidNft.abi --bin abi/lucidNft.bin --pkg lucidNft --type lucidNft --out ./lucidNft/lucidNft.go
 
 var DB *gorm.DB
 
@@ -59,12 +60,10 @@ func loadCORS(router *mux.Router) {
 	router.Use(c.Handler)
 }
 
-func returnFrame(w http.ResponseWriter, frameId, imageUrl, title string) {
+func returnFrame(w http.ResponseWriter, frameId, imageUrl, txUrl string, buttons []frame.Button) {
 	w.Header().Set("Content-Type", "text/html")
-	// Write the HTML meta tags to the response
-	frameBtn := frame.Button(title)
 
-	ogFrame := frame.ParseFrame(imageUrl, frameId, frameBtn)
+	ogFrame := frame.ParseFrame(imageUrl, frameId, txUrl, buttons...)
 	fmt.Fprint(w, ogFrame)
 }
 
@@ -101,7 +100,12 @@ func frameHandler() http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodGet:
-			returnFrame(w, frmaeId, imageUrl, string(frame.ClaimButton))
+			frameBtn := frame.ClaimButton
+
+			var btns []frame.Button
+
+			btns = append(btns, frameBtn)
+			returnFrame(w, frmaeId, imageUrl, "", btns)
 		case http.MethodPost:
 			frameReqBody := reqBody{}
 			err := json.NewDecoder(r.Body).Decode(&frameReqBody)
@@ -149,8 +153,12 @@ func frameHandler() http.HandlerFunc {
 			// buttonTitle := "claim"
 			uv := r.URL.Query()
 			claimed := uv.Get("claimed")
+			txHash := uv.Get("tx")
 			if claimed == "true" {
 				buttonTitle = "make your own @"
+			}
+			if txHash != "" {
+				buttonTitle = "view tx"
 			}
 			button := frame.Button(buttonTitle)
 			buttonIdx := action.TappedButton.Index
@@ -165,13 +173,27 @@ func frameHandler() http.HandlerFunc {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				fmt.Println("Response: ", response)
-				if button == frame.PromptButton {
-					http.Redirect(w, r, response, http.StatusFound)
+				if button == frame.TransactionButton {
+					redirect := fmt.Sprintf("%v/tx/%v",response, txHash)
+					http.Redirect(w, r, redirect, http.StatusFound)
 					return
 				}
-				image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
-				returnFrame(w, frmaeId, image, string(frame.PromptButton))
+				// image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
+
+				var btns []frame.Button
+
+				btns = append(btns, frame.TransactionButton)
+				btns = append(btns, frame.PromptButton)
+				returnFrame(w, frmaeId, imageUrl, response, btns)
+			case 2:
+				button = frame.PromptButton
+				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				http.Redirect(w, r, response, http.StatusFound)
 			}
 			// parseFrameAction(message)
 
@@ -238,7 +260,7 @@ func fetchFrameHandler() http.HandlerFunc {
 
 		response := frameObject{
 			ItemId: itemId,
-			Url: url,
+			Url:    url,
 		}
 
 		if err := json.NewEncoder(w).Encode(response); err != nil {
