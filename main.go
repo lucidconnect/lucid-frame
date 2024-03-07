@@ -62,15 +62,8 @@ func loadCORS(router *mux.Router) {
 
 func returnFrame(w http.ResponseWriter, frameId, imageUrl, txUrl string, buttons []frame.Button) {
 	w.Header().Set("Content-Type", "text/html")
-	// Write the HTML meta tags to the response
-	// frameBtn := frame.Button(title)
-
-	// var btns []frame.Button
-
-	// btns = append(btns, frameBtn)
 
 	ogFrame := frame.ParseFrame(imageUrl, frameId, txUrl, buttons...)
-	fmt.Println(ogFrame)
 	fmt.Fprint(w, ogFrame)
 }
 
@@ -180,7 +173,6 @@ func frameHandler() http.HandlerFunc {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				fmt.Println("Response: ", response)
 				if button == frame.TransactionButton {
 					redirect := fmt.Sprintf("%v/tx/%v",response, txHash)
 					http.Redirect(w, r, redirect, http.StatusFound)
@@ -192,7 +184,6 @@ func frameHandler() http.HandlerFunc {
 
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
-				fmt.Println("btns ", btns)
 				returnFrame(w, frmaeId, imageUrl, response, btns)
 			case 2:
 				button = frame.PromptButton
@@ -202,9 +193,7 @@ func frameHandler() http.HandlerFunc {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				fmt.Println("Response: ", response)
 				http.Redirect(w, r, response, http.StatusFound)
-
 			}
 			// parseFrameAction(message)
 

@@ -88,7 +88,6 @@ func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
 
 func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 	var frame string
-	fmt.Println("button: ", buttons[0])
 	// for i, title := range buttons {
 	switch buttons[0] {
 	case ClaimButton:
@@ -162,7 +161,6 @@ func ParseFrameAction(btn Button, item, verifiedAddress string) (string, error) 
 	case TransactionButton:
 		// view transaction
 		response = os.Getenv("BLOCK_EXPLORER")
-
 	case PromptButton:
 		// return a 302
 		response = os.Getenv("LUCID_LANDING_PAGE")
