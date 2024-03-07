@@ -110,8 +110,6 @@ func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 			</body>
 			</html>
 			`, imageUrl, imageUrl, buttons[0])
-	case "refresh":
-	case "view tx":
 	case TransactionButton:
 		// on redirect, server should respond with a 302 and redirect to a set url
 		landingPage := os.Getenv("LUCID_LANDING_PAGE")
