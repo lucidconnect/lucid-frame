@@ -192,6 +192,7 @@ func frameHandler() http.HandlerFunc {
 
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
+				fmt.Println("btns ", btns)
 				returnFrame(w, frmaeId, image, response, btns)
 			case 2:
 				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)

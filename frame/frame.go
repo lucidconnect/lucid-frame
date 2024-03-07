@@ -88,7 +88,7 @@ func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
 
 func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 	var frame string
-
+	fmt.Println("button: ", buttons[0])
 	// for i, title := range buttons {
 	switch buttons[0] {
 	case ClaimButton:
