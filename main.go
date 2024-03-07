@@ -182,19 +182,20 @@ func frameHandler() http.HandlerFunc {
 				}
 				fmt.Println("Response: ", response)
 				if button == frame.TransactionButton {
-					redirect := fmt.Sprintf("%v/tx/%v", txHash)
+					redirect := fmt.Sprintf("%v/tx/%v",response, txHash)
 					http.Redirect(w, r, redirect, http.StatusFound)
 					return
 				}
-				image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
+				// image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
 
 				var btns []frame.Button
 
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
 				fmt.Println("btns ", btns)
-				returnFrame(w, frmaeId, image, response, btns)
+				returnFrame(w, frmaeId, imageUrl, response, btns)
 			case 2:
+				button = frame.PromptButton
 				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
 				if err != nil {
 					log.Println(err)
