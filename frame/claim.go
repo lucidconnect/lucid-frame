@@ -78,6 +78,7 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 	var signatureResponse MintAuthorizationResponse
 	if err = json.NewDecoder(claimResp.Body).Decode(&signatureResponse); err != nil {
 		log.Println("getting mint authorization error", err)
+		fmt.Println(claimResp.Body)
 		return "", err
 	}
 
