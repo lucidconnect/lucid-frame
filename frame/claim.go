@@ -92,6 +92,7 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 	// nonce.SetString(signatureResponse.Nonce, 10)
 	signature, err := hex.DecodeString(signatureResponse.MintingSignature)
 	if err != nil {
+		err = fmt.Errorf("decoding signature failed with error %v",err)
 		log.Println(err)
 		return "", err
 	}
