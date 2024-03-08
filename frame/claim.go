@@ -98,6 +98,7 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 
 	txHash, err := MintNft(contract, claimer, amount, tokenId, nonce, signature, int64(signatureResponse.Chain))
 	if err != nil {
+		log.Println("minting nft failed",err)
 		return "", err
 	}
 
