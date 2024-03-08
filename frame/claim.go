@@ -92,14 +92,14 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 	// nonce.SetString(signatureResponse.Nonce, 10)
 	signature, err := hex.DecodeString(signatureResponse.MintingSignature)
 	if err != nil {
-		err = fmt.Errorf("decoding signature failed with error %v",err)
-		log.Println(err)
+		err = fmt.Errorf("decoding signature failed with error %v", err)
+		log.Println("signature ", signatureResponse.MintingSignature)
 		return "", err
 	}
 
 	txHash, err := MintNft(contract, claimer, amount, tokenId, nonce, signature, int64(signatureResponse.Chain))
 	if err != nil {
-		log.Println("minting nft failed",err)
+		log.Println("minting nft failed", err)
 		return "", err
 	}
 
