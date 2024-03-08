@@ -50,14 +50,14 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 
 	resp, err := http.DefaultClient.Do(httpRequest)
 	if err != nil {
-		log.Println(err)
+		log.Println("http request error ", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	var mintPass MintPassResponse
 	if err = json.NewDecoder(resp.Body).Decode(&mintPass); err != nil {
-		log.Println(err)
+		log.Println("decoding mint pass failed ", err)
 		return "", err
 	}
 
@@ -77,7 +77,7 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 
 	var signatureResponse MintAuthorizationResponse
 	if err = json.NewDecoder(claimResp.Body).Decode(&signatureResponse); err != nil {
-		log.Println(err)
+		log.Println("getting mint authorization error", err)
 		return "", err
 	}
 
