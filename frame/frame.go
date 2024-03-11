@@ -28,7 +28,7 @@ var (
 	ClaimButton       Button = "claim"
 	RefreshBotton     Button = "refresh"
 	TransactionButton Button = "view tx"
-	PromptButton      Button = "make your own @"
+	PromptButton      Button = "make your own"
 )
 
 type ClaimFrame struct {
