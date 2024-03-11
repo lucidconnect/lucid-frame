@@ -176,7 +176,7 @@ func frameHandler() http.HandlerFunc {
 				var btns []frame.Button
 
 				if response == "mint limit reached" {
-					imageUrl = "https://naluu773luec7jlrhxbiewbxub2distvof2vhxh37fzxdvqjfpla.arweave.net/aBdKf_tdCC-lcT3Cglg3oHQ0SnVxdVPc-_lzcdYJK9Y"
+					imageUrl = "https://arweave.net/EJzoN8b4tj7ZhmF73vGd-M6PHy4nezUvbGQQFh9vUZ4"
 					btns = append(btns, frame.PromptButton)
 
 					returnFrame(w, frmaeId, imageUrl, response, btns)
