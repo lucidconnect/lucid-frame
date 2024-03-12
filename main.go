@@ -155,7 +155,7 @@ func frameHandler() http.HandlerFunc {
 			claimed := uv.Get("claimed")
 			txHash := uv.Get("tx")
 			if claimed == "true" {
-				buttonTitle = "make your own @"
+				buttonTitle = "make your own"
 			}
 			if txHash != "" {
 				buttonTitle = "view tx"
