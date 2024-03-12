@@ -28,7 +28,7 @@ var (
 	ClaimButton       Button = "claim"
 	RefreshBotton     Button = "refresh"
 	TransactionButton Button = "view tx"
-	PromptButton      Button = "make your own @"
+	PromptButton      Button = "make your own"
 )
 
 type ClaimFrame struct {
@@ -141,7 +141,29 @@ func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 			</body>
 			</html>
 			`, imageUrl, imageUrl, txButton, txUrl, landingPageButton, url)
-
+	case PromptButton:
+		baseUrl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
+		frame = fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta name="description" content="luciddrops.xyz">
+				<meta property="og:image" content="%v">
+				<meta property="fc:frame" content="vNext" />
+				<meta property="fc:frame:image" content="%v" />
+				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post_redirect" />
+				<meta property="fc:frame:post_url" content="%v" />
+				<title></title>
+			</head>
+			<body>
+				<h1>Lucid Drops</h1>
+			</body>
+			</html>
+			`, imageUrl, imageUrl, buttons[0], url)
 	}
 	return frame
 }

@@ -41,6 +41,7 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 
 	mq := mintPassUrl.Query()
 	mq.Add("itemId", itemId)
+	mq.Add("wallet", claimAddress)
 
 	mintPassUrl.RawQuery = mq.Encode()
 	httpRequest, err := http.NewRequest(http.MethodPost, mintPassUrl.String(), nil)
@@ -61,6 +62,9 @@ func ClaimItem(itemId, claimAddress string) (string, error) {
 		return "", err
 	}
 
+	if !mintPass.Valid {
+		return "mint limit reached", nil
+	}
 	// claim
 	cq := claimUrl.Query()
 	cq.Add("passId", mintPass.PassID)
