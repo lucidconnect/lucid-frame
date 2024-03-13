@@ -98,14 +98,27 @@ func frameHandler() http.HandlerFunc {
 		imageUrl := frameDetails.ImageUrl
 		item := frameDetails.ItemId
 
+		// fetch drop details
+		drop, err := frame.GetDropDetails(item, DB)
+		if err != nil {
+			log.Println(err)
+			// w.WriteHeader(http.StatusInternalServerError)
+			// w.Write([]byte("an unexpected error occured"))
+			// return
+		}
+
 		switch r.Method {
 		case http.MethodGet:
 			frameBtn := frame.ClaimButton
+			if drop.MintPrice != nil {
+				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
+			} else {
+				var btns []frame.Button
 
-			var btns []frame.Button
+				btns = append(btns, frameBtn)
+				returnFrame(w, frmaeId, imageUrl, "", btns)
+			}
 
-			btns = append(btns, frameBtn)
-			returnFrame(w, frmaeId, imageUrl, "", btns)
 		case http.MethodPost:
 			frameReqBody := reqBody{}
 			err := json.NewDecoder(r.Body).Decode(&frameReqBody)
@@ -182,7 +195,7 @@ func frameHandler() http.HandlerFunc {
 					returnFrame(w, frmaeId, imageUrl, response, btns)
 				}
 				if button == frame.TransactionButton {
-					redirect := fmt.Sprintf("%v/tx/%v",response, txHash)
+					redirect := fmt.Sprintf("%v/tx/%v", response, txHash)
 					http.Redirect(w, r, redirect, http.StatusFound)
 					return
 				}

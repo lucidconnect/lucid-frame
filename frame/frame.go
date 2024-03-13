@@ -3,9 +3,12 @@ package frame
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/lucidconnect/inverse/graph/model"
 
 	// "github.com/lucidconnect/silver-arrow/abi/KernelFactory"
 	// "github.com/lucidconnect/silver-arrow/core/service/erc4337"
@@ -25,6 +28,7 @@ Frame constants:
 type Button string
 
 var (
+	MintButton        Button = "mint"
 	ClaimButton       Button = "claim"
 	RefreshBotton     Button = "refresh"
 	TransactionButton Button = "view tx"
@@ -33,9 +37,39 @@ var (
 
 type ClaimFrame struct {
 	ID                uuid.UUID `gorm:"primaryKey"`
-	ItemId            string
+	ItemId            string    // TODO: itemId will now be dropId
 	ImageUrl          string
 	CollectionAddress string
+}
+
+type Drop struct {
+	Base
+	CreatorID              uuid.UUID
+	CreatorAddress         string
+	Name                   string
+	Image                  string `json:"image"`
+	Thumbnail              string `json:"thumbnail"`
+	Description            string `json:"description"`
+	AAContractAddress      *string
+	TransactionHash        *string
+	AAWalletDeploymentHash *string
+	BlockchainNetwork      *model.BlockchainNetwork
+	Featured               bool `gorm:"default:false"`
+	MintUrl                string
+	MintPrice              *float64
+	GasIsCreatorSponsored  bool
+}
+
+type Base struct {
+	ID        uuid.UUID      `gorm:"type:uuid;primary_key;"`
+	CreatedAt time.Time      `gorm:"not null"`
+	UpdatedAt time.Time      `gorm:"not null"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (base *Base) BeforeCreate(scope *gorm.DB) error {
+	base.ID = uuid.New()
+	return nil
 }
 
 func CreateClaimFrame(itemId, imageUrl, collectionAddr string, db *gorm.DB) (string, error) {
@@ -77,6 +111,22 @@ func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
 	return frameDetails, nil
 }
 
+func GetDropDetails(id string, db *gorm.DB) (*Drop, error) {
+	var drop *Drop
+
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if err := db.Where("id = ?", uid).First(&drop).Error; err != nil {
+		return nil, err
+	}
+
+	return drop, nil
+}
+
 func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
 	var frameDetails *ClaimFrame
 	if err := db.Where("item_id = ?", itemId).First(&frameDetails).Error; err != nil {
@@ -84,6 +134,29 @@ func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
 	}
 
 	return frameDetails, nil
+}
+
+func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
+	frame := fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta name="description" content="luciddrops.xyz">
+				<meta property="og:image" content="%v">
+				<meta property="fc:frame" content="vNext" />
+				<meta property="fc:frame:image" content="%v" />
+				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post_redirect" />
+				<title></title>
+			</head>
+			<body>
+				<h1>Lucid Drops</h1>
+			</body>
+			</html>
+			`, imageUrl, imageUrl, ClaimButton)
+	fmt.Fprint(w, frame)
 }
 
 func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
