@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/inverse/graph/model"
 
 	// "github.com/lucidconnect/silver-arrow/abi/KernelFactory"
 	// "github.com/lucidconnect/silver-arrow/core/service/erc4337"
@@ -53,7 +52,7 @@ type Drop struct {
 	AAContractAddress      *string
 	TransactionHash        *string
 	AAWalletDeploymentHash *string
-	BlockchainNetwork      *model.BlockchainNetwork
+	BlockchainNetwork      *string
 	Featured               bool `gorm:"default:false"`
 	MintUrl                string
 	MintPrice              *float64
