@@ -178,6 +178,11 @@ func frameHandler() http.HandlerFunc {
 			fmt.Printf("button %v clicked \n", buttonIdx)
 			switch buttonIdx {
 			case 1:
+				if button == frame.MintButton {
+					redirect := fmt.Sprintf("%v/drop/%v", os.Getenv("LUCID_LANDING_PAGE"), drop.ID)
+					http.Redirect(w, r, redirect, http.StatusFound)
+					return
+				}
 				// claim
 				fmt.Println("Button: ", button)
 				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)

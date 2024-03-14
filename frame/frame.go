@@ -155,7 +155,7 @@ func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
 				<h1>Lucid Drops</h1>
 			</body>
 			</html>
-			`, imageUrl, imageUrl, ClaimButton)
+			`, imageUrl, imageUrl, MintButton)
 	fmt.Fprint(w, frame)
 }
 
