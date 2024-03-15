@@ -37,6 +37,7 @@ var (
 type ClaimFrame struct {
 	ID                uuid.UUID `gorm:"primaryKey"`
 	ItemId            string    // TODO: itemId will now be dropId
+	DropId            string
 	ImageUrl          string
 	CollectionAddress string
 }
@@ -71,15 +72,16 @@ func (base *Base) BeforeCreate(scope *gorm.DB) error {
 	return nil
 }
 
-func CreateClaimFrame(itemId, imageUrl, collectionAddr string, db *gorm.DB) (string, error) {
+func CreateClaimFrame(dropId, imageUrl, collectionAddr string, db *gorm.DB) (string, error) {
 	// check if a frame already exists
-	frameDetail, err := GetFrameByItemId(itemId, db)
+	frameDetail, err := GetFrameByDropId(dropId, db)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			id := uuid.New()
 			frame := ClaimFrame{
 				ID:                id,
-				ItemId:            itemId,
+				ItemId:            "",
+				DropId:            dropId,
 				ImageUrl:          imageUrl,
 				CollectionAddress: collectionAddr,
 			}
@@ -126,9 +128,9 @@ func GetDropDetails(id string, db *gorm.DB) (*Drop, error) {
 	return drop, nil
 }
 
-func GetFrameByItemId(itemId string, db *gorm.DB) (*ClaimFrame, error) {
+func GetFrameByDropId(dropId string, db *gorm.DB) (*ClaimFrame, error) {
 	var frameDetails *ClaimFrame
-	if err := db.Where("item_id = ?", itemId).First(&frameDetails).Error; err != nil {
+	if err := db.Where("drop_id = ?", dropId).First(&frameDetails).Error; err != nil {
 		return nil, err
 	}
 
@@ -158,6 +160,87 @@ func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
 	fmt.Fprint(w, frame)
 }
 
+func returnClaimFrame(imageUrl string) string {
+	frame := fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta name="description" content="luciddrops.xyz">
+				<meta property="og:image" content="%v">
+				<meta property="fc:frame" content="vNext" />
+				<meta property="fc:frame:image" content="%v" />
+				<meta property="fc:frame:button:1" content="%v" />
+				<title></title>
+			</head>
+			<body>
+				<h1>Lucid Drops</h1>
+			</body>
+			</html>
+			`, imageUrl, imageUrl, ClaimButton)
+	return frame
+}
+
+func returnTransactionSuccessFrame(imageUrl, frameId, tx string) string {
+	baseUrl := os.Getenv("BASE_URL")
+	landingPage := os.Getenv("LUCID_LANDING_PAGE")
+
+	txUrl := fmt.Sprintf("%v/frame/%v?tx=%v", baseUrl, frameId, tx)
+	landingPageButton := Button(fmt.Sprintf("%v - %v", PromptButton, landingPage))
+	url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
+
+	frame := fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta name="description" content="This is a simple Go web application that returns HTML meta tags.">
+				<meta property="og:image" content="%v">
+				<meta property="fc:frame" content="vNext" />
+				<meta property="fc:frame:image" content="%v" />
+				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post_redirect" />
+				<meta property="fc:frame:post_url" content="%v" />
+				<meta property="fc:frame:button:2" content="%v" />
+				<meta property="fc:frame:button:2:action" content="post_redirect" />
+				<meta property="fc:frame:post_url" content="%v" />
+				<title></title>
+			</head>
+			<body>
+				<h1>Inverse</h1>
+			</body>
+			</html>
+			`, imageUrl, imageUrl, TransactionButton, txUrl, landingPageButton, url)
+	return frame
+}
+
+func returnMintLimitFrame(imageUrl, frameId string) string {
+	baseUrl := os.Getenv("BASE_URL")
+	url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
+	frame := fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta name="description" content="luciddrops.xyz">
+				<meta property="og:image" content="%v">
+				<meta property="fc:frame" content="vNext" />
+				<meta property="fc:frame:image" content="%v" />
+				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post_redirect" />
+				<meta property="fc:frame:post_url" content="%v" />
+				<title></title>
+			</head>
+			<body>
+				<h1>Lucid Drops</h1>
+			</body>
+			</html>
+			`, imageUrl, imageUrl, PromptButton, url)
+	return frame
+}
 func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 	var frame string
 	// for i, title := range buttons {
