@@ -323,12 +323,12 @@ func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 	return frame
 }
 
-func ParseFrameAction(btn Button, item, verifiedAddress string) (string, error) {
+func ParseFrameAction(btn Button, drop, verifiedAddress string) (string, error) {
 	var response string
 	fmt.Println(btn)
 	switch btn {
 	case ClaimButton:
-		tx, err := ClaimItem(item, verifiedAddress)
+		tx, err := ClaimItem(drop, verifiedAddress)
 		if err != nil {
 			return "", err
 		}
