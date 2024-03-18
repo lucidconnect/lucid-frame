@@ -140,10 +140,10 @@ func frameHandler() http.HandlerFunc {
 			return
 		}
 		imageUrl := frameDetails.ImageUrl
-		item := frameDetails.ItemId
+		dropId := frameDetails.DropId
 
 		// fetch drop details
-		drop, err := frame.GetDropDetails(item, DB)
+		drop, err := frame.GetDropDetails(dropId, DB)
 		if err != nil {
 			log.Println(err)
 			// w.WriteHeader(http.StatusInternalServerError)
@@ -205,7 +205,7 @@ func frameHandler() http.HandlerFunc {
 				}
 				// claim
 				fmt.Println("Button: ", button)
-				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
@@ -234,7 +234,7 @@ func frameHandler() http.HandlerFunc {
 				returnFrame(w, frameId, imageUrl, response, btns)
 			case 2:
 				button = frame.PromptButton
-				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
