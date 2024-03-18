@@ -67,28 +67,72 @@ func returnFrame(w http.ResponseWriter, frameId, imageUrl, txUrl string, buttons
 	fmt.Fprint(w, ogFrame)
 }
 
+func validateFrameRequest(frameId, msgData string) (neynar.NeynarFrameValidation, error) {
+	neynarApiKey := os.Getenv("NEYNAR_API_KEY")
+	neynarClient, err := neynar.NewNeynarClient(neynar.WithApiKey(neynarApiKey))
+	if err != nil {
+		return neynar.NeynarFrameValidation{}, err
+	}
+
+	// frameDetails, err := frame.GetFrameDetails(frameId, DB)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return err
+	// }
+	// // framedetails should return dropId
+	// imageUrl := frameDetails.ImageUrl
+	// drop := frameDetails.ItemId
+
+	type validationBody struct {
+		CastReactionContext bool   `json:"cast_reaction_context"`
+		FollowContext       bool   `json:"follow_context"`
+		MessageBytesInHex   string `json:"message_bytes_in_hex"`
+	}
+
+	vBody := validationBody{true, false, msgData}
+	msgDataBytes, err := json.Marshal(vBody)
+	if err != nil {
+		log.Println(err)
+		return neynar.NeynarFrameValidation{}, err
+	}
+
+	action, err := neynarClient.ValidateFrameMessage(msgDataBytes)
+	if err != nil {
+		log.Printf("error validating frame %v", err)
+		return neynar.NeynarFrameValidation{}, err
+	}
+
+	if len(action.Interactor.VerifiedAdresses.EthAddresses) == 0 {
+		err := neynar.ErrNoVerifications
+		log.Println(err)
+		return neynar.NeynarFrameValidation{}, err
+	}
+
+	return action, nil
+}
+
 func frameHandler() http.HandlerFunc {
 	type reqBody struct {
 		UntrustedData map[string]any    `json:"untrustedData"`
 		TrustedData   map[string]string `json:"trustedData"`
 	}
-	neynarApiKey := os.Getenv("NEYNAR_API_KEY")
+	// neynarApiKey := os.Getenv("NEYNAR_API_KEY")
 	return func(w http.ResponseWriter, r *http.Request) {
-		neynarClient, err := neynar.NewNeynarClient(neynar.WithApiKey(neynarApiKey))
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("an unexpected error occured"))
-			return
-		}
+		// neynarClient, err := neynar.NewNeynarClient(neynar.WithApiKey(neynarApiKey))
+		// if err != nil {
+		// 	log.Println(err)
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	w.Write([]byte("an unexpected error occured"))
+		// 	return
+		// }
 
 		vars := mux.Vars(r)
-		frmaeId, ok := vars["frame"]
+		frameId, ok := vars["frame"]
 		if !ok {
 			fmt.Println("id is missing in parameters")
 		}
 
-		frameDetails, err := frame.GetFrameDetails(frmaeId, DB)
+		frameDetails, err := frame.GetFrameDetails(frameId, DB)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -96,16 +140,29 @@ func frameHandler() http.HandlerFunc {
 			return
 		}
 		imageUrl := frameDetails.ImageUrl
-		item := frameDetails.ItemId
+		dropId := frameDetails.DropId
+
+		// fetch drop details
+		drop, err := frame.GetDropDetails(dropId, DB)
+		if err != nil {
+			log.Println(err)
+			// w.WriteHeader(http.StatusInternalServerError)
+			// w.Write([]byte("an unexpected error occured"))
+			// return
+		}
 
 		switch r.Method {
 		case http.MethodGet:
 			frameBtn := frame.ClaimButton
+			if drop.MintPrice != nil {
+				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
+			} else {
+				var btns []frame.Button
 
-			var btns []frame.Button
+				btns = append(btns, frameBtn)
+				returnFrame(w, frameId, imageUrl, "", btns)
+			}
 
-			btns = append(btns, frameBtn)
-			returnFrame(w, frmaeId, imageUrl, "", btns)
 		case http.MethodPost:
 			frameReqBody := reqBody{}
 			err := json.NewDecoder(r.Body).Decode(&frameReqBody)
@@ -118,34 +175,10 @@ func frameHandler() http.HandlerFunc {
 
 			msgData := frameReqBody.TrustedData["messageBytes"]
 
-			type validationBody struct {
-				CastReactionContext bool   `json:"cast_reaction_context"`
-				FollowContext       bool   `json:"follow_context"`
-				MessageBytesInHex   string `json:"message_bytes_in_hex"`
-			}
-
-			vBody := validationBody{true, false, msgData}
-			msgDataBytes, err := json.Marshal(vBody)
+			action, err := validateFrameRequest(frameId, msgData)
 			if err != nil {
 				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("an unexpected error occured"))
-				return
-			}
-
-			action, err := neynarClient.ValidateFrameMessage(msgDataBytes)
-			if err != nil {
-				log.Printf("error validating frame %v", err)
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte("invalid frame message"))
-				return
-			}
-
-			if len(action.Interactor.VerifiedAdresses.EthAddresses) == 0 {
-				err := neynar.ErrNoVerifications
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
 			}
 
 			verifiedEthAddress := action.Interactor.VerifiedAdresses.EthAddresses[0]
@@ -165,9 +198,14 @@ func frameHandler() http.HandlerFunc {
 			fmt.Printf("button %v clicked \n", buttonIdx)
 			switch buttonIdx {
 			case 1:
+				if button == frame.MintButton {
+					redirect := fmt.Sprintf("%v/drop/%v", os.Getenv("LUCID_LANDING_PAGE"), drop.ID)
+					http.Redirect(w, r, redirect, http.StatusFound)
+					return
+				}
 				// claim
 				fmt.Println("Button: ", button)
-				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
@@ -179,10 +217,10 @@ func frameHandler() http.HandlerFunc {
 					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
 					btns = append(btns, frame.PromptButton)
 
-					returnFrame(w, frmaeId, imageUrl, response, btns)
+					returnFrame(w, frameId, imageUrl, response, btns)
 				}
 				if button == frame.TransactionButton {
-					redirect := fmt.Sprintf("%v/tx/%v",response, txHash)
+					redirect := fmt.Sprintf("%v/tx/%v", response, txHash)
 					http.Redirect(w, r, redirect, http.StatusFound)
 					return
 				}
@@ -193,10 +231,10 @@ func frameHandler() http.HandlerFunc {
 				// image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
-				returnFrame(w, frmaeId, imageUrl, response, btns)
+				returnFrame(w, frameId, imageUrl, response, btns)
 			case 2:
 				button = frame.PromptButton
-				response, err := frame.ParseFrameAction(button, item, verifiedEthAddress)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
@@ -211,7 +249,7 @@ func frameHandler() http.HandlerFunc {
 }
 
 type createFrameRequest struct {
-	ItemId     string `json:"itemId"`
+	DropId     string `json:"dropId"`
 	ImageUrl   string `json:"imageUrl"`
 	Collection string `json:"collection"`
 }
@@ -225,11 +263,11 @@ func createFrameHandler() http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		itemId := createFrameReq.ItemId
+		dropId := createFrameReq.DropId
 		imageUrl := createFrameReq.ImageUrl
 		collectionAddr := createFrameReq.Collection
 
-		frameId, err := frame.CreateClaimFrame(itemId, imageUrl, collectionAddr, DB)
+		frameId, err := frame.CreateClaimFrame(dropId, imageUrl, collectionAddr, DB)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -257,7 +295,7 @@ func fetchFrameHandler() http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		itemId := r.URL.Query().Get("itemId")
-		frameDetail, err := frame.GetFrameByItemId(itemId, DB)
+		frameDetail, err := frame.GetFrameByDropId(itemId, DB)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusNotFound)

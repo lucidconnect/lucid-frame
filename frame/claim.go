@@ -33,14 +33,14 @@ type MintAuthorizationResponse struct {
 	SmartContractAddress string `json:"smartContractAddress"`
 }
 
-func ClaimItem(itemId, claimAddress string) (string, error) {
+func ClaimItem(dropId, claimAddress string) (string, error) {
 	// blockExplorer := os.Getenv("BLOCK_EXPLORER")
 	inverseBaseUrl := os.Getenv("INVERSE_URL")
 	mintPassUrl, _ := url.Parse(fmt.Sprintf("%v/mintPass", inverseBaseUrl))
 	claimUrl, _ := url.Parse(fmt.Sprintf("%v/claim", inverseBaseUrl))
 
 	mq := mintPassUrl.Query()
-	mq.Add("itemId", itemId)
+	mq.Add("dropId", dropId)
 	mq.Add("wallet", claimAddress)
 
 	mintPassUrl.RawQuery = mq.Encode()
