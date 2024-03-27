@@ -88,7 +88,7 @@ func validateFrameRequest(frameId, msgData string) (neynar.NeynarFrameValidation
 		FollowContext       bool   `json:"follow_context"`
 		MessageBytesInHex   string `json:"message_bytes_in_hex"`
 	}
-
+	fmt.Println("msg data", msgData)
 	vBody := validationBody{true, false, msgData}
 	msgDataBytes, err := json.Marshal(vBody)
 	if err != nil {

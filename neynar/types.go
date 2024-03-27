@@ -75,7 +75,7 @@ type Button struct {
 	ActionType string `json:"action_type"`
 }
 type NeynarFrameValidation struct {
-	Object       string     `json:"onject"`
+	Object       string     `json:"object"`
 	Interactor   Interactor `json:"interactor"`
 	TappedButton Button     `json:"tapped_button"`
 	Input        struct {
