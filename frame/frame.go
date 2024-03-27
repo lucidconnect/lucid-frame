@@ -114,7 +114,7 @@ func GetFrameDetails(id string, db *gorm.DB) (*ClaimFrame, error) {
 
 func GetDropDetails(id string, db *gorm.DB) (*Drop, error) {
 	var drop *Drop
-
+	fmt.Println("uuid ", id)
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		log.Println(err)
