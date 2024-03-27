@@ -125,12 +125,13 @@ func frameHandler() http.HandlerFunc {
 		// 	w.Write([]byte("an unexpected error occured"))
 		// 	return
 		// }
-
 		vars := mux.Vars(r)
+		fmt.Println("vars", vars)
 		frameId, ok := vars["frame"]
 		if !ok {
 			fmt.Println("id is missing in parameters")
 		}
+		fmt.Println("frame id", frameId)
 
 		frameDetails, err := frame.GetFrameDetails(frameId, DB)
 		if err != nil {
