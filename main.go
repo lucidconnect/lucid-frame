@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
@@ -60,10 +61,10 @@ func loadCORS(router *mux.Router) {
 	router.Use(c.Handler)
 }
 
-func returnFrame(w http.ResponseWriter, frameId, imageUrl, txUrl string, buttons []frame.Button) {
+func returnFrame(w http.ResponseWriter, frameId, imageUrl, msg string, buttons []frame.Button) {
 	w.Header().Set("Content-Type", "text/html")
 
-	ogFrame := frame.ParseFrame(imageUrl, frameId, txUrl, buttons...)
+	ogFrame := frame.ParseFrame(imageUrl, frameId, msg, buttons...)
 	fmt.Fprint(w, ogFrame)
 }
 
@@ -88,7 +89,7 @@ func validateFrameRequest(frameId, msgData string) (neynar.NeynarFrameValidation
 		FollowContext       bool   `json:"follow_context"`
 		MessageBytesInHex   string `json:"message_bytes_in_hex"`
 	}
-
+	fmt.Println("msg data", msgData)
 	vBody := validationBody{true, false, msgData}
 	msgDataBytes, err := json.Marshal(vBody)
 	if err != nil {
@@ -125,12 +126,13 @@ func frameHandler() http.HandlerFunc {
 		// 	w.Write([]byte("an unexpected error occured"))
 		// 	return
 		// }
-
 		vars := mux.Vars(r)
+		fmt.Println("vars", vars)
 		frameId, ok := vars["frame"]
 		if !ok {
 			fmt.Println("id is missing in parameters")
 		}
+		fmt.Println("frame id", frameId)
 
 		frameDetails, err := frame.GetFrameDetails(frameId, DB)
 		if err != nil {
@@ -212,13 +214,18 @@ func frameHandler() http.HandlerFunc {
 					return
 				}
 				var btns []frame.Button
-
-				if response == "mint limit reached" {
+				if _, err = hexutil.Decode(response); err != nil {
 					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
 					btns = append(btns, frame.PromptButton)
-
+					// Todo: use response to generate image
 					returnFrame(w, frameId, imageUrl, response, btns)
 				}
+				// if response == "mint limit reached" {
+				// 	imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
+				// 	btns = append(btns, frame.PromptButton)
+
+				// 	returnFrame(w, frameId, imageUrl, response, btns)
+				// }
 				if button == frame.TransactionButton {
 					redirect := fmt.Sprintf("%v/tx/%v", response, txHash)
 					http.Redirect(w, r, redirect, http.StatusFound)
