@@ -241,7 +241,7 @@ func returnMintLimitFrame(imageUrl, frameId string) string {
 			`, imageUrl, imageUrl, PromptButton, url)
 	return frame
 }
-func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
+func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string {
 	var frame string
 	// for i, title := range buttons {
 	switch buttons[0] {
@@ -271,7 +271,7 @@ func ParseFrame(imageUrl, frameId string, tx string, buttons ...Button) string {
 		landingPageButton := Button(fmt.Sprintf("%v - %v", buttons[1], landingPage))
 		baseUrl := os.Getenv("BASE_URL")
 		url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
-		txUrl := fmt.Sprintf("%v/frame/%v?tx=%v", baseUrl, frameId, tx)
+		txUrl := fmt.Sprintf("%v/frame/%v?tx=%v", baseUrl, frameId, msg)
 		// "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
@@ -328,11 +328,11 @@ func ParseFrameAction(btn Button, drop, verifiedAddress string) (string, error) 
 	fmt.Println(btn)
 	switch btn {
 	case ClaimButton:
-		tx, err := ClaimItem(drop, verifiedAddress)
+		msg, err := ClaimItem(drop, verifiedAddress)
 		if err != nil {
-			return "", err
+			return msg, err
 		}
-		response = tx
+		response = msg
 	case RefreshBotton:
 		// refresh
 	case TransactionButton:

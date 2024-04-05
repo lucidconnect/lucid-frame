@@ -18,8 +18,9 @@ import (
 )
 
 type MintPassResponse struct {
-	Valid  bool   `json:"valid"`
-	PassID string `json:"passID"`
+	Valid   bool   `json:"valid"`
+	PassID  string `json:"passID"`
+	Message string `json:"message,omitempty"`
 }
 
 type MintAuthorizationResponse struct {
@@ -63,7 +64,7 @@ func ClaimItem(dropId, claimAddress string) (string, error) {
 	}
 
 	if !mintPass.Valid {
-		return "mint limit reached", nil
+		return mintPass.Message, nil
 	}
 	// claim
 	cq := claimUrl.Query()
