@@ -156,7 +156,7 @@ func frameHandler() http.HandlerFunc {
 		switch r.Method {
 		case http.MethodGet:
 			frameBtn := frame.ClaimButton
-			if drop.MintPrice != nil || drop.GasIsCreatorSponsored {
+			if drop.MintPrice != nil || !drop.GasIsCreatorSponsored {
 				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
 			} else {
 				var btns []frame.Button
