@@ -400,7 +400,7 @@ func ParseFrameAction(btn Button, drop, verifiedAddress string, db *gorm.DB) (st
 	fmt.Println(btn)
 	switch btn {
 	case CheckEligibility:
-		CheckWalletEligibility(drop, verifiedAddress)
+		go CheckWalletEligibility(drop, verifiedAddress)
 	case ClaimButton:
 		mintPass, err :=  GetMintPass(verifiedAddress, drop, db)
 		if err != nil {
