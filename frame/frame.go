@@ -329,6 +329,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame" content="vNext" />
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post" />
 				<title></title>
 			</head>
 			<body>
