@@ -203,6 +203,7 @@ func frameHandler() http.HandlerFunc {
 			uv := r.URL.Query()
 			claimed := uv.Get("claimed")
 			txHash := uv.Get("tx")
+		fmt.Println("claimed - ", claimed)
 			if claimed == "true" {
 				buttonTitle = "make your own"
 			}
