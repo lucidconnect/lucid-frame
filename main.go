@@ -158,6 +158,7 @@ func frameHandler() http.HandlerFunc {
 			case "farcasterChannel,":
 				channels = drop.FarcasterCriteria.ChannelID
 			}
+			fmt.Println(channels)
 		}
 
 		switch r.Method {
