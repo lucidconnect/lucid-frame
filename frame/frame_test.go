@@ -1,5 +1,12 @@
 package frame
 
+import (
+	"fmt"
+	"net/url"
+	"testing"
+	"time"
+)
+
 // "image/jpeg"
 
 // func Test_GenerateCounterFactualAddress(t *testing.T) {
@@ -24,3 +31,15 @@ package frame
 // 	assert.NoError(t, err)
 // 	// jpeg.Encode(out)
 // }
+
+func Test_ImageUrls(t *testing.T) {
+	parsedURL, _ := url.Parse("https://jade-historic-pony-314.mypinata.cloud/ipfs/QmZnC193fR8C1qZyLf8XgTn7UzTTYNnyva81sJUeeMWd74")
+	timestamp := time.Now().Unix() // Get current Unix timestamp
+	query := parsedURL.Query()
+	query.Set("_", fmt.Sprintf("%d", timestamp)) // Append timestamp as query parameter
+	parsedURL.RawQuery = query.Encode()
+
+	newImageUrl := parsedURL.String()
+
+	fmt.Println(newImageUrl)
+}

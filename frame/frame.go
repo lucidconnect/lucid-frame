@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -318,6 +319,14 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 			</html>
 			`, imageUrl, imageUrl, buttons[0])
 	case ClaimButton:
+		parsedURL, _ := url.Parse(imageUrl)
+		timestamp := time.Now().Unix() // Get current Unix timestamp
+		query := parsedURL.Query()
+		query.Set("_", fmt.Sprintf("%d", timestamp)) // Append timestamp as query parameter
+		parsedURL.RawQuery = query.Encode()
+
+		newImageUrl := parsedURL.String()
+
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
@@ -336,7 +345,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<h1>Lucid Drops</h1>
 			</body>
 			</html>
-			`, imageUrl, imageUrl, buttons[0])
+			`, newImageUrl, newImageUrl, buttons[0])
 	case TransactionButton:
 		// on redirect, server should respond with a 302 and redirect to a set url
 		landingPage := os.Getenv("LUCID_LANDING_PAGE")
@@ -403,7 +412,7 @@ func ParseFrameAction(btn Button, drop, verifiedAddress string, db *gorm.DB) (st
 	case CheckEligibility:
 		go CheckWalletEligibility(drop, verifiedAddress)
 	case ClaimButton:
-		mintPass, err :=  GetMintPass(verifiedAddress, drop, db)
+		mintPass, err := GetMintPass(verifiedAddress, drop, db)
 		if err != nil {
 			fmt.Println(err)
 			return "", nil
