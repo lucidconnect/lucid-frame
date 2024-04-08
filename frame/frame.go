@@ -327,6 +327,9 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 
 		newImageUrl := parsedURL.String()
 
+		baseUrl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/frame/%v?based=true", baseUrl, frameId)
+
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
@@ -339,13 +342,14 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
 				<meta property="fc:frame:button:1:action" content="post" />
+				<meta property="fc:frame:post_url" content="%v" />
 				<title></title>
 			</head>
 			<body>
 				<h1>Lucid Drops</h1>
 			</body>
 			</html>
-			`, newImageUrl, newImageUrl, buttons[0])
+			`, newImageUrl, newImageUrl, buttons[0], url)
 	case TransactionButton:
 		// on redirect, server should respond with a 302 and redirect to a set url
 		landingPage := os.Getenv("LUCID_LANDING_PAGE")
