@@ -1,4 +1,6 @@
-package frame_test
+package frame
+
+// "image/jpeg"
 
 // func Test_GenerateCounterFactualAddress(t *testing.T) {
 // 	os.Setenv("KERNEL_IMPLEMENTATION_ADDRESS", "0xf048AD83CB2dfd6037A43902a2A5Be04e53cd2Eb")
@@ -9,4 +11,16 @@ package frame_test
 
 // 	_, err := frame.CalculateCounterFactualAddress(ed25519Signer, kernelFactory, rpc)
 // 	assert.NoError(t, err, "error calculating counterfactual address")
+// }
+
+// func Test_GenerateImage(t *testing.T) {
+// 	b, err := generateImage("test image", "#000000", "#FFFFFF", 32)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+// image.
+// 	out, err := os.Create("./sample.jpg")
+// 	assert.NoError(t, err)
+// 	// jpeg.Encode(out)
 // }

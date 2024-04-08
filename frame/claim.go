@@ -9,13 +9,30 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"lucid.frame/lucidNft"
 )
+
+type MintPass struct {
+	ID            uuid.UUID      `gorm:"type:uuid;primary_key;"`
+	CreatedAt     time.Time      `gorm:"not null"`
+	UpdatedAt     time.Time      `gorm:"not null"`
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
+	ItemId        string
+	DropID        string
+	MinterAddress string
+	TokenID       string
+	UsedAt        *time.Time `gorm:"default:null"`
+	// ItemIdOnContract    int64
+	DropContractAddress string
+}
 
 type MintPassResponse struct {
 	Valid   bool   `json:"valid"`
@@ -34,12 +51,9 @@ type MintAuthorizationResponse struct {
 	SmartContractAddress string `json:"smartContractAddress"`
 }
 
-func ClaimItem(dropId, claimAddress string) (string, error) {
-	// blockExplorer := os.Getenv("BLOCK_EXPLORER")
+func CheckWalletEligibility(dropId, claimAddress string) (string, error) {
 	inverseBaseUrl := os.Getenv("INVERSE_URL")
 	mintPassUrl, _ := url.Parse(fmt.Sprintf("%v/mintPass", inverseBaseUrl))
-	claimUrl, _ := url.Parse(fmt.Sprintf("%v/claim", inverseBaseUrl))
-
 	mq := mintPassUrl.Query()
 	mq.Add("dropId", dropId)
 	mq.Add("wallet", claimAddress)
@@ -66,9 +80,18 @@ func ClaimItem(dropId, claimAddress string) (string, error) {
 	if !mintPass.Valid {
 		return mintPass.Message, nil
 	}
+
+	return mintPass.PassID, nil
+}
+
+func ClaimItem(claimAddress, mintPassId string) (string, error) {
+	// blockExplorer := os.Getenv("BLOCK_EXPLORER")
+	inverseBaseUrl := os.Getenv("INVERSE_URL")
+	claimUrl, _ := url.Parse(fmt.Sprintf("%v/claim", inverseBaseUrl))
+
 	// claim
 	cq := claimUrl.Query()
-	cq.Add("passId", mintPass.PassID)
+	cq.Add("passId", mintPassId)
 	cq.Add("claimingAddress", claimAddress)
 
 	claimUrl.RawQuery = cq.Encode()

@@ -152,15 +152,28 @@ func frameHandler() http.HandlerFunc {
 			// w.Write([]byte("an unexpected error occured"))
 			// return
 		}
+		var channels string
+		if drop.Criteria != "" {
+			switch drop.FarcasterCriteria.CriteriaType {
+			case "farcasterChannel":
+				channels = drop.FarcasterCriteria.ChannelID
+			}
+		}
 
 		switch r.Method {
 		case http.MethodGet:
-			frameBtn := frame.ClaimButton
+			var frameBtn frame.Button
+
+			if channels != "" {
+				frameBtn = frame.CheckEligibility
+			} else {
+				frameBtn = frame.ClaimButton
+			}
+
 			if drop.MintPrice != nil || !drop.GasIsCreatorSponsored {
 				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
 			} else {
 				var btns []frame.Button
-
 				btns = append(btns, frameBtn)
 				returnFrame(w, frameId, imageUrl, "", btns)
 			}
@@ -207,12 +220,20 @@ func frameHandler() http.HandlerFunc {
 				}
 				// claim
 				fmt.Println("Button: ", button)
-				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+
+				if response == "" {
+					// return claim frame
+					var btns []frame.Button
+					btns = append(btns, frame.ClaimButton)
+					returnFrame(w, frameId, imageUrl, response, btns)
+				}
+
 				var btns []frame.Button
 				if _, err = hexutil.Decode(response); err != nil {
 					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
@@ -241,7 +262,7 @@ func frameHandler() http.HandlerFunc {
 				returnFrame(w, frameId, imageUrl, response, btns)
 			case 2:
 				button = frame.PromptButton
-				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
