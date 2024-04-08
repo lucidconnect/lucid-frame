@@ -155,7 +155,7 @@ func frameHandler() http.HandlerFunc {
 		var channels string
 		if drop.Criteria != "" {
 			switch drop.FarcasterCriteria.CriteriaType {
-			case "farcasterChannel":
+			case "farcasterChannel,":
 				channels = drop.FarcasterCriteria.ChannelID
 			}
 		}
