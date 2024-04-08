@@ -65,6 +65,7 @@ func returnFrame(w http.ResponseWriter, frameId, imageUrl, msg string, buttons [
 	w.Header().Set("Content-Type", "text/html")
 
 	ogFrame := frame.ParseFrame(imageUrl, frameId, msg, buttons...)
+	fmt.Println("frame ", ogFrame)
 	fmt.Fprint(w, ogFrame)
 }
 
