@@ -235,6 +235,7 @@ func frameHandler() http.HandlerFunc {
 					var btns []frame.Button
 					btns = append(btns, frame.ClaimButton)
 					returnFrame(w, frameId, imageUrl, response, btns)
+					return
 				}
 
 				var btns []frame.Button
