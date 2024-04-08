@@ -204,7 +204,7 @@ func frameHandler() http.HandlerFunc {
 			uv := r.URL.Query()
 			claimed := uv.Get("claimed")
 			txHash := uv.Get("tx")
-		fmt.Println("claimed - ", claimed)
+			fmt.Println("claimed - ", claimed)
 			if claimed == "true" {
 				buttonTitle = "make your own"
 			}
@@ -229,6 +229,8 @@ func frameHandler() http.HandlerFunc {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+
+				fmt.Println("response ", response)
 
 				if response == "" {
 					// return claim frame
