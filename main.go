@@ -212,7 +212,7 @@ func frameHandler() http.HandlerFunc {
 
 			fmt.Println("action - ", urlAction)
 
-			if urlAction == "check-eligigibilty" {
+			if urlAction == "check-eligibilty" {
 				button := frame.Button("check eligibility")
 
 				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
@@ -227,7 +227,7 @@ func frameHandler() http.HandlerFunc {
 				returnFrame(w, frameId, imageUrl, response, btns)
 				return
 			} else if urlAction == "claim" {
-				button := frame.Button("claim")
+				button := frame.ClaimButton
 
 				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
 				if err != nil {

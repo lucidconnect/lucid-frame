@@ -301,7 +301,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 	switch buttons[0] {
 	case CheckEligibility:
 		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/frame/%v?action=check-eligigibilty", baseUrl, frameId)
+		url := fmt.Sprintf("%v/frame/%v?action=check-eligibilty", baseUrl, frameId)
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
@@ -378,11 +378,10 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
 				<meta property="fc:frame:button:1:action" content="link" />
-				<meta property="fc:frame:button:1:action:target" content="%v" />
-
+				<meta property="fc:frame:button:1:target" content="%v" />
 				<meta property="fc:frame:button:2" content="%v" />
 				<meta property="fc:frame:button:2:action" content="link" />
-				<meta property="fc:frame:button:2:action:target" content="%v" />
+				<meta property="fc:frame:button:2:target" content="%v" />
 				<title></title>
 			</head>
 			<body>
@@ -407,7 +406,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
 				<meta property="fc:frame:button:1:action" content="link" />
-				<meta property="fc:frame:button:1:action:target" content="%v" />
+				<meta property="fc:frame:button:1:target" content="%v" />
 				<title></title>
 			</head>
 			<body>
