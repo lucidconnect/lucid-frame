@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/OrlovEvgeny/go-mcache"
 	"github.com/google/uuid"
 
 	// "github.com/lucidconnect/silver-arrow/abi/KernelFactory"
@@ -105,6 +106,8 @@ type FarcasterCriteria struct {
 	FarcasterProfileID string // fid of account to do verifications against
 	FarcasterUsername  string
 }
+
+var Cache *mcache.CacheDriver
 
 type Base struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primary_key;"`
@@ -302,6 +305,30 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 	case CheckEligibility:
 		baseUrl := os.Getenv("BASE_URL")
 		url := fmt.Sprintf("%v/frame/%v?action=check-eligibilty", baseUrl, frameId)
+		frame = fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta name="description" content="luciddrops.xyz">
+				<meta property="og:image" content="%v">
+				<meta property="fc:frame" content="vNext" />
+				<meta property="fc:frame:image" content="%v" />
+				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post" />
+				<meta property="fc:frame:post_url" content="%v" />
+				<title></title>
+			</head>
+			<body>
+				<h1>Lucid Drops</h1>
+			</body>
+			</html>
+			`, imageUrl, imageUrl, buttons[0], url)
+	case RefreshBotton:
+		baseUrl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/frame/%v?action=refresh", baseUrl, frameId)
+		imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712655939/checking_farcaster_activity_i9zvyp.png"
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>

@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/OrlovEvgeny/go-mcache"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -32,6 +34,7 @@ func main() {
 	godotenv.Load()
 
 	DB, _ = SetupDatabase()
+	frame.Cache = mcache.New()
 
 	port := os.Getenv("PORT")
 	r := mux.NewRouter()
@@ -221,11 +224,30 @@ func frameHandler() http.HandlerFunc {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-
+				// add an artificial delay
+				time.Sleep(3 * time.Second)
 				var btns []frame.Button
-				btns = append(btns, frame.ClaimButton)
+				btns = append(btns, frame.RefreshBotton)
 				returnFrame(w, frameId, imageUrl, response, btns)
 				return
+			} else if urlAction == "refresh" {
+				v, ok := frame.Cache.Get(verifiedEthAddress)
+				if !ok {
+					var btns []frame.Button
+					btns = append(btns, frame.RefreshBotton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				}
+				value := v.(bool)
+				if value {
+					var btns []frame.Button
+					btns = append(btns, frame.ClaimButton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				} else {
+					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712657526/account_not_elligible_qwieeq.png"
+					var btns []frame.Button
+					btns = append(btns, frame.PromptButton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				}
 			} else if urlAction == "claim" {
 				button := frame.ClaimButton
 

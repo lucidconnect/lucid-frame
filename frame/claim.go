@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/OrlovEvgeny/go-mcache"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -78,8 +79,10 @@ func CheckWalletEligibility(dropId, claimAddress string) (string, error) {
 	}
 
 	if !mintPass.Valid {
+		Cache.Set(claimAddress, false, mcache.TTL_FOREVER)
 		return mintPass.Message, nil
 	}
+	Cache.Set(claimAddress, true, mcache.TTL_FOREVER)
 
 	return mintPass.PassID, nil
 }
