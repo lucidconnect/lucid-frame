@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/OrlovEvgeny/go-mcache"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -32,6 +34,7 @@ func main() {
 	godotenv.Load()
 
 	DB, _ = SetupDatabase()
+	frame.Cache = mcache.New()
 
 	port := os.Getenv("PORT")
 	r := mux.NewRouter()
@@ -65,6 +68,8 @@ func returnFrame(w http.ResponseWriter, frameId, imageUrl, msg string, buttons [
 	w.Header().Set("Content-Type", "text/html")
 
 	ogFrame := frame.ParseFrame(imageUrl, frameId, msg, buttons...)
+	fmt.Println("frame ", ogFrame)
+	// w.Write()
 	fmt.Fprint(w, ogFrame)
 }
 
@@ -119,13 +124,6 @@ func frameHandler() http.HandlerFunc {
 	}
 	// neynarApiKey := os.Getenv("NEYNAR_API_KEY")
 	return func(w http.ResponseWriter, r *http.Request) {
-		// neynarClient, err := neynar.NewNeynarClient(neynar.WithApiKey(neynarApiKey))
-		// if err != nil {
-		// 	log.Println(err)
-		// 	w.WriteHeader(http.StatusInternalServerError)
-		// 	w.Write([]byte("an unexpected error occured"))
-		// 	return
-		// }
 		vars := mux.Vars(r)
 		fmt.Println("vars", vars)
 		frameId, ok := vars["frame"]
@@ -152,15 +150,31 @@ func frameHandler() http.HandlerFunc {
 			// w.Write([]byte("an unexpected error occured"))
 			// return
 		}
+		var channels string
+		if drop.Criteria != "" {
+			switch drop.FarcasterCriteria.CriteriaType {
+			case "farcasterChannel,":
+				channels = drop.FarcasterCriteria.ChannelID
+			}
+			fmt.Println(channels)
+		}
+
+		fmt.Println("Method", r.Method)
 
 		switch r.Method {
 		case http.MethodGet:
-			frameBtn := frame.ClaimButton
+			var frameBtn frame.Button
+
+			if channels != "" {
+				frameBtn = frame.CheckEligibility
+			} else {
+				frameBtn = frame.ClaimButton
+			}
+
 			if drop.MintPrice != nil || !drop.GasIsCreatorSponsored {
 				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
 			} else {
 				var btns []frame.Button
-
 				btns = append(btns, frameBtn)
 				returnFrame(w, frameId, imageUrl, "", btns)
 			}
@@ -184,73 +198,69 @@ func frameHandler() http.HandlerFunc {
 			}
 
 			verifiedEthAddress := action.Interactor.VerifiedAdresses.EthAddresses[0]
-			buttonTitle := action.Cast.Frames[0].Buttons[0].Title
+			// buttonTitle := action.Cast.Frames[0].Buttons[0].Title
 			// buttonTitle := "claim"
 			uv := r.URL.Query()
-			claimed := uv.Get("claimed")
-			txHash := uv.Get("tx")
-			if claimed == "true" {
-				buttonTitle = "make your own"
-			}
-			if txHash != "" {
-				buttonTitle = "view tx"
-			}
-			button := frame.Button(buttonTitle)
-			buttonIdx := action.TappedButton.Index
-			fmt.Printf("button %v clicked \n", buttonIdx)
-			switch buttonIdx {
-			case 1:
-				if button == frame.MintButton {
-					redirect := fmt.Sprintf("%v/drop/%v", os.Getenv("LUCID_LANDING_PAGE"), drop.ID)
-					http.Redirect(w, r, redirect, http.StatusFound)
+
+			urlAction := uv.Get("action")
+
+			fmt.Println("action - ", urlAction)
+
+			if urlAction == "check-eligibilty" {
+				button := frame.Button("check eligibility")
+
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				// claim
-				fmt.Println("Button: ", button)
-				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
+				// add an artificial delay
+				time.Sleep(3 * time.Second)
+				var btns []frame.Button
+				btns = append(btns, frame.RefreshBotton)
+				returnFrame(w, frameId, imageUrl, response, btns)
+				return
+			} else if urlAction == "refresh" {
+				v, ok := frame.Cache.Get(verifiedEthAddress)
+				if !ok {
+					var btns []frame.Button
+					btns = append(btns, frame.RefreshBotton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				}
+				value := v.(bool)
+				if value {
+					var btns []frame.Button
+					btns = append(btns, frame.ClaimButton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				} else {
+					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712657526/account_not_elligible_qwieeq.png"
+					var btns []frame.Button
+					btns = append(btns, frame.PromptButton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				}
+			} else if urlAction == "claim" {
+				button := frame.ClaimButton
+
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
 				if err != nil {
 					log.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
 				var btns []frame.Button
+
 				if _, err = hexutil.Decode(response); err != nil {
+					fmt.Println(err)
 					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
 					btns = append(btns, frame.PromptButton)
 					// Todo: use response to generate image
 					returnFrame(w, frameId, imageUrl, response, btns)
 				}
-				// if response == "mint limit reached" {
-				// 	imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
-				// 	btns = append(btns, frame.PromptButton)
-
-				// 	returnFrame(w, frameId, imageUrl, response, btns)
-				// }
-				if button == frame.TransactionButton {
-					redirect := fmt.Sprintf("%v/tx/%v", response, txHash)
-					http.Redirect(w, r, redirect, http.StatusFound)
-					return
-				}
-				if button == frame.PromptButton {
-					http.Redirect(w, r, response, http.StatusFound)
-					return
-				}
-				// image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
 				returnFrame(w, frameId, imageUrl, response, btns)
-			case 2:
-				button = frame.PromptButton
-				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress)
-				if err != nil {
-					log.Println(err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				http.Redirect(w, r, response, http.StatusFound)
 			}
-			// parseFrameAction(message)
-
 		}
 	}
 }
