@@ -208,6 +208,9 @@ func frameHandler() http.HandlerFunc {
 			claimed := uv.Get("claimed")
 			txHash := uv.Get("tx")
 			fmt.Println("claimed - ", claimed)
+			if claimed == "false" {
+				buttonTitle = "claim"
+			}
 			if claimed == "true" {
 				buttonTitle = "make your own"
 			}
