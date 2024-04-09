@@ -202,33 +202,19 @@ func frameHandler() http.HandlerFunc {
 			}
 
 			verifiedEthAddress := action.Interactor.VerifiedAdresses.EthAddresses[0]
-			buttonTitle := action.Cast.Frames[0].Buttons[0].Title
+			// buttonTitle := action.Cast.Frames[0].Buttons[0].Title
 			// buttonTitle := "claim"
 			uv := r.URL.Query()
-			claimed := uv.Get("claimed")
-			txHash := uv.Get("tx")
-			fmt.Println("claimed - ", claimed)
-			if claimed == "false" {
-				buttonTitle = "claim"
-			}
-			if claimed == "true" {
-				buttonTitle = "make your own"
-			}
-			if txHash != "" {
-				buttonTitle = "view tx"
-			}
-			button := frame.Button(buttonTitle)
-			buttonIdx := action.TappedButton.Index
-			fmt.Printf("button %v clicked \n", buttonIdx)
-			switch buttonIdx {
-			case 1:
-				if button == frame.MintButton {
-					redirect := fmt.Sprintf("%v/drop/%v", os.Getenv("LUCID_LANDING_PAGE"), drop.ID)
-					http.Redirect(w, r, redirect, http.StatusFound)
-					return
-				}
-				// claim
-				fmt.Println("Button: ", button)
+			// claimed := uv.Get("claimed")
+			// txHash := uv.Get("tx")
+
+			urlAction := uv.Get("action")
+
+			fmt.Println("action - ", urlAction)
+
+			if urlAction == "check-eligigibilty" {
+				button := frame.Button("check eligibility")
+
 				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
 				if err != nil {
 					log.Println(err)
@@ -236,52 +222,108 @@ func frameHandler() http.HandlerFunc {
 					return
 				}
 
-				fmt.Println("response ", response)
+				var btns []frame.Button
+				btns = append(btns, frame.ClaimButton)
+				returnFrame(w, frameId, imageUrl, response, btns)
+				return
+			} else if urlAction == "claim" {
+				button := frame.Button("claim")
 
-				if response == "" {
-					// return claim frame
-					var btns []frame.Button
-					btns = append(btns, frame.ClaimButton)
-					returnFrame(w, frameId, imageUrl, response, btns)
+				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
+				if err != nil {
+					log.Println(err)
+					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-
 				var btns []frame.Button
+
 				if _, err = hexutil.Decode(response); err != nil {
+					fmt.Println(err)
 					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
 					btns = append(btns, frame.PromptButton)
 					// Todo: use response to generate image
 					returnFrame(w, frameId, imageUrl, response, btns)
 				}
-				// if response == "mint limit reached" {
-				// 	imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
-				// 	btns = append(btns, frame.PromptButton)
-
-				// 	returnFrame(w, frameId, imageUrl, response, btns)
-				// }
-				if button == frame.TransactionButton {
-					redirect := fmt.Sprintf("%v/tx/%v", response, txHash)
-					http.Redirect(w, r, redirect, http.StatusFound)
-					return
-				}
-				if button == frame.PromptButton {
-					http.Redirect(w, r, response, http.StatusFound)
-					return
-				}
-				// image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
 				returnFrame(w, frameId, imageUrl, response, btns)
-			case 2:
-				button = frame.PromptButton
-				response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
-				if err != nil {
-					log.Println(err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				http.Redirect(w, r, response, http.StatusFound)
 			}
+
+			// fmt.Println("claimed - ", claimed)
+			// if claimed == "false" {
+			// 	buttonTitle = "claim"
+			// }
+			// if claimed == "true" {
+			// 	buttonTitle = "make your own"
+			// }
+			// if txHash != "" {
+			// 	buttonTitle = "view tx"
+			// }
+			// button := frame.Button(buttonTitle)
+			// buttonIdx := action.TappedButton.Index
+			// fmt.Printf("button %v clicked \n", buttonIdx)
+			// switch buttonIdx {
+			// case 1:
+			// 	if button == frame.MintButton {
+			// 		redirect := fmt.Sprintf("%v/drop/%v", os.Getenv("LUCID_LANDING_PAGE"), drop.ID)
+			// 		http.Redirect(w, r, redirect, http.StatusFound)
+			// 		return
+			// 	}
+			// 	// claim
+			// 	fmt.Println("Button: ", button)
+			// 	response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
+			// 	if err != nil {
+			// 		log.Println(err)
+			// 		w.WriteHeader(http.StatusInternalServerError)
+			// 		return
+			// 	}
+
+			// 	fmt.Println("response ", response)
+
+			// 	if response == "" {
+			// 		// return claim frame
+			// 		var btns []frame.Button
+			// 		btns = append(btns, frame.ClaimButton)
+			// 		returnFrame(w, frameId, imageUrl, response, btns)
+			// 		return
+			// 	}
+
+			// 	var btns []frame.Button
+			// 	if _, err = hexutil.Decode(response); err != nil {
+			// 		imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
+			// 		btns = append(btns, frame.PromptButton)
+			// 		// Todo: use response to generate image
+			// 		returnFrame(w, frameId, imageUrl, response, btns)
+			// 	}
+			// 	// if response == "mint limit reached" {
+			// 	// 	imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1710177216/oops_pfogqm.png"
+			// 	// 	btns = append(btns, frame.PromptButton)
+
+			// 	// 	returnFrame(w, frameId, imageUrl, response, btns)
+			// 	// }
+			// 	if button == frame.TransactionButton {
+			// 		redirect := fmt.Sprintf("%v/tx/%v", response, txHash)
+			// 		http.Redirect(w, r, redirect, http.StatusFound)
+			// 		return
+			// 	}
+			// 	if button == frame.PromptButton {
+			// 		http.Redirect(w, r, response, http.StatusFound)
+			// 		return
+			// 	}
+			// 	// image := "https://arweave.net/zTVSCzHxGyqWv9J5ZBwsHlyJ0ZNfM2SyANAnfSBHYPk"
+			// 	btns = append(btns, frame.TransactionButton)
+			// 	btns = append(btns, frame.PromptButton)
+			// 	returnFrame(w, frameId, imageUrl, response, btns)
+			// case 2:
+			// 	button = frame.PromptButton
+			// 	response, err := frame.ParseFrameAction(button, dropId, verifiedEthAddress, DB)
+			// 	if err != nil {
+			// 		log.Println(err)
+			// 		w.WriteHeader(http.StatusInternalServerError)
+			// 		return
+			// 	}
+			// 	http.Redirect(w, r, response, http.StatusFound)
+			// }
 			// parseFrameAction(message)
 
 		}

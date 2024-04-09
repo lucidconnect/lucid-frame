@@ -300,6 +300,8 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 	// for i, title := range buttons {
 	switch buttons[0] {
 	case CheckEligibility:
+		baseUrl := os.Getenv("BASE_URL")
+		url := fmt.Sprintf("%v/frame/%v?action=check-eligigibilty", baseUrl, frameId)
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
@@ -311,13 +313,15 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame" content="vNext" />
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
+				<meta property="fc:frame:button:1:action" content="post" />
+				<meta property="fc:frame:post_url" content="%v" />
 				<title></title>
 			</head>
 			<body>
 				<h1>Lucid Drops</h1>
 			</body>
 			</html>
-			`, imageUrl, imageUrl, buttons[0])
+			`, imageUrl, imageUrl, buttons[0], url)
 	case ClaimButton:
 		parsedURL, _ := url.Parse(imageUrl)
 		timestamp := time.Now().Unix() // Get current Unix timestamp
@@ -328,7 +332,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 		newImageUrl := parsedURL.String()
 
 		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/frame/%v?claimed=false", baseUrl, frameId)
+		url := fmt.Sprintf("%v/frame/%v?action=claim", baseUrl, frameId)
 
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
@@ -355,9 +359,12 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 		landingPage := os.Getenv("LUCID_LANDING_PAGE")
 		txButton := buttons[0]
 		landingPageButton := Button(fmt.Sprintf("%v - %v", buttons[1], landingPage))
-		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
-		txUrl := fmt.Sprintf("%v/frame/%v?tx=%v", baseUrl, frameId, msg)
+		// baseUrl := os.Getenv("BASE_URL")
+
+		explorer := os.Getenv("BLOCK_EXPLORER")
+
+		// url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
+		txUrl := fmt.Sprintf("%v/tx/%v", explorer, msg)
 		// "https://7806-2a09-bac5-4dd6-d2-00-15-36d.ngrok-free.app/f4a76b5e-6616-491f-a846-b1a811a3de94?claimed=true"
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
@@ -370,21 +377,24 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame" content="vNext" />
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
-				<meta property="fc:frame:button:1:action" content="post_redirect" />
-				<meta property="fc:frame:post_url" content="%v" />
+				<meta property="fc:frame:button:1:action" content="link" />
+				<meta property="fc:frame:button:1:action:target" content="%v" />
+
 				<meta property="fc:frame:button:2" content="%v" />
-				<meta property="fc:frame:button:2:action" content="post_redirect" />
-				<meta property="fc:frame:post_url" content="%v" />
+				<meta property="fc:frame:button:2:action" content="link" />
+				<meta property="fc:frame:button:2:action:target" content="%v" />
 				<title></title>
 			</head>
 			<body>
 				<h1>Inverse</h1>
 			</body>
 			</html>
-			`, imageUrl, imageUrl, txButton, txUrl, landingPageButton, url)
+			`, imageUrl, imageUrl, txButton, txUrl, landingPageButton, landingPage)
 	case PromptButton:
-		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
+		// baseUrl := os.Getenv("BASE_URL")
+		// url := fmt.Sprintf("%v/frame/%v?claimed=true", baseUrl, frameId)
+		landingPage := os.Getenv("LUCID_LANDING_PAGE")
+
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
@@ -396,15 +406,15 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 				<meta property="fc:frame" content="vNext" />
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
-				<meta property="fc:frame:button:1:action" content="post_redirect" />
-				<meta property="fc:frame:post_url" content="%v" />
+				<meta property="fc:frame:button:1:action" content="link" />
+				<meta property="fc:frame:button:1:action:target" content="%v" />
 				<title></title>
 			</head>
 			<body>
 				<h1>Lucid Drops</h1>
 			</body>
 			</html>
-			`, imageUrl, imageUrl, buttons[0], url)
+			`, imageUrl, imageUrl, buttons[0], landingPage)
 	}
 	return frame
 }
