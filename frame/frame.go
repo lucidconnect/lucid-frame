@@ -328,7 +328,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 		newImageUrl := parsedURL.String()
 
 		baseUrl := os.Getenv("BASE_URL")
-		url := fmt.Sprintf("%v/frame/%v?based=true", baseUrl, frameId)
+		url := fmt.Sprintf("%v/frame/%v?claimed=false", baseUrl, frameId)
 
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
