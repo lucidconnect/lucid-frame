@@ -66,6 +66,7 @@ func returnFrame(w http.ResponseWriter, frameId, imageUrl, msg string, buttons [
 
 	ogFrame := frame.ParseFrame(imageUrl, frameId, msg, buttons...)
 	fmt.Println("frame ", ogFrame)
+	// w.Write()
 	fmt.Fprint(w, ogFrame)
 }
 
@@ -161,6 +162,8 @@ func frameHandler() http.HandlerFunc {
 			}
 			fmt.Println(channels)
 		}
+
+		fmt.Println("Method", r.Method)
 
 		switch r.Method {
 		case http.MethodGet:
