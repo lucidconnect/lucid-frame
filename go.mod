@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/OrlovEvgeny/go-mcache v0.0.0-20200121124330-1a8195b34f3a // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect

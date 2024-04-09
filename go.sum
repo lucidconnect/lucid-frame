@@ -1,6 +1,8 @@
 github.com/DataDog/zstd v1.4.5 h1:EndNeuB0l9syBZhut0wns3gV1hL8zX8LIu6ZiVHWLIQ=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
+github.com/OrlovEvgeny/go-mcache v0.0.0-20200121124330-1a8195b34f3a h1:Cf4CrDeyrIcuIiJZEZJAH5dapqQ6J3OmP/vHPbDjaFA=
+github.com/OrlovEvgeny/go-mcache v0.0.0-20200121124330-1a8195b34f3a/go.mod h1:ig6eVXkYn/9dz0Vm8UdLf+E0u1bE6kBSn3n2hqk6jas=
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
