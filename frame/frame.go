@@ -328,7 +328,7 @@ func ParseFrame(imageUrl, frameId string, msg string, buttons ...Button) string 
 	case RefreshBotton:
 		baseUrl := os.Getenv("BASE_URL")
 		url := fmt.Sprintf("%v/frame/%v?action=refresh", baseUrl, frameId)
-		imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712655939/checking_farcaster_activity_i9zvyp.png"
+		imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712662498/farcaster_activity_refresh_dbgyjm.png"
 		frame = fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
