@@ -195,6 +195,8 @@ func GetMintPass(wallet, dropId string, db *gorm.DB) (*MintPass, error) {
 }
 
 func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
+	redirectUrl := fmt.Sprintf("%v/drop/%v", os.Getenv("LUCID_LANDING_PAGE"), id)
+	// 		http.Redirect(w, r, redirect, http.StatusFound)
 	frame := fmt.Sprintf(`
 			<!DOCTYPE html>
 			<html>
@@ -206,14 +208,15 @@ func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
 				<meta property="fc:frame" content="vNext" />
 				<meta property="fc:frame:image" content="%v" />
 				<meta property="fc:frame:button:1" content="%v" />
-				<meta property="fc:frame:button:1:action" content="post_redirect" />
+				<meta property="fc:frame:button:1:action" content="link" />
+				<meta property="fc:frame:button:1:target" content="%v" />
 				<title></title>
 			</head>
 			<body>
 				<h1>Lucid Drops</h1>
 			</body>
 			</html>
-			`, imageUrl, imageUrl, MintButton)
+			`, imageUrl, imageUrl, MintButton, redirectUrl)
 	fmt.Fprint(w, frame)
 }
 
@@ -454,6 +457,7 @@ func ParseFrameAction(btn Button, drop, verifiedAddress string, db *gorm.DB) (st
 	case ClaimButton:
 		var passId string
 		mintPass, err := GetMintPass(verifiedAddress, drop, db)
+		fmt.Println("mint pass",mintPass)
 		if err != nil || mintPass.UsedAt != nil {
 			passId, err = CheckWalletEligibility(drop, verifiedAddress)
 			fmt.Println(err)
