@@ -452,12 +452,19 @@ func ParseFrameAction(btn Button, drop, verifiedAddress string, db *gorm.DB) (st
 	case CheckEligibility:
 		go CheckWalletEligibility(drop, verifiedAddress)
 	case ClaimButton:
+		var passId string
 		mintPass, err := GetMintPass(verifiedAddress, drop, db)
 		if err != nil {
+			passId, err = CheckWalletEligibility(drop, verifiedAddress)
 			fmt.Println(err)
-			return "", nil
+			if err != nil {
+				return "", nil
+			}
+		} else {
+			passId = mintPass.ID.String()
 		}
-		msg, err := ClaimItem(verifiedAddress, mintPass.ID.String())
+
+		msg, err := ClaimItem(verifiedAddress, passId)
 		if err != nil {
 			return msg, err
 		}
