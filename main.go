@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/OrlovEvgeny/go-mcache"
@@ -228,10 +229,15 @@ func frameHandler() http.HandlerFunc {
 					btns = append(btns, frame.RefreshBotton)
 					returnFrame(w, frameId, imageUrl, "", btns)
 				}
-				value := v.(bool)
-				if value {
+				value := v.(frame.MintPassResponse)
+				if value.Valid {
 					var btns []frame.Button
 					btns = append(btns, frame.ClaimButton)
+					returnFrame(w, frameId, imageUrl, "", btns)
+				} else if strings.Contains(value.Message, "limit") {
+					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712869076/nft_mint_limit_qaozs2.png"
+					var btns []frame.Button
+					btns = append(btns, frame.PromptButton)
 					returnFrame(w, frameId, imageUrl, "", btns)
 				} else {
 					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712657526/account_not_elligible_qwieeq.png"
