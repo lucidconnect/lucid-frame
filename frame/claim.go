@@ -78,11 +78,10 @@ func CheckWalletEligibility(dropId, claimAddress string) (string, error) {
 		return "", err
 	}
 
+	Cache.Set(claimAddress, mintPass, mcache.TTL_FOREVER)
 	if !mintPass.Valid {
-		Cache.Set(claimAddress, false, mcache.TTL_FOREVER)
-		return mintPass.Message, nil
+		return "", fmt.Errorf(mintPass.Message)
 	}
-	Cache.Set(claimAddress, true, mcache.TTL_FOREVER)
 
 	return mintPass.PassID, nil
 }
