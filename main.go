@@ -151,13 +151,9 @@ func frameHandler() http.HandlerFunc {
 			// w.Write([]byte("an unexpected error occured"))
 			// return
 		}
-		var channels string
+		actionRequired := false
 		if drop.Criteria != "" {
-			switch drop.FarcasterCriteria.CriteriaType {
-			case "farcasterChannel,":
-				channels = drop.FarcasterCriteria.ChannelID
-			}
-			fmt.Println(channels)
+			actionRequired = true
 		}
 
 		fmt.Println("Method", r.Method)
@@ -166,7 +162,7 @@ func frameHandler() http.HandlerFunc {
 		case http.MethodGet:
 			var frameBtn frame.Button
 
-			if channels != "" {
+			if actionRequired {
 				frameBtn = frame.CheckEligibility
 			} else {
 				frameBtn = frame.ClaimButton
