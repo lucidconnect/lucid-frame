@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/OrlovEvgeny/go-mcache"
@@ -231,7 +230,7 @@ func frameHandler() http.HandlerFunc {
 					var btns []frame.Button
 					btns = append(btns, frame.ClaimButton)
 					returnFrame(w, frameId, imageUrl, "", btns)
-				} else if strings.Contains(value.Message, "limit") {
+				} else {
 					// imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712869076/nft_mint_limit_qaozs2.png"
 
 					imageGeneratorUrl := os.Getenv("OG_IMAGE_GENERATOR")
