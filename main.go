@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/OrlovEvgeny/go-mcache"
@@ -216,6 +215,7 @@ func frameHandler() http.HandlerFunc {
 				time.Sleep(3 * time.Second)
 				var btns []frame.Button
 				btns = append(btns, frame.RefreshBotton)
+				// drop.FarcasterCriteria
 				returnFrame(w, frameId, imageUrl, response, btns)
 				return
 			} else if urlAction == "refresh" {
@@ -230,16 +230,19 @@ func frameHandler() http.HandlerFunc {
 					var btns []frame.Button
 					btns = append(btns, frame.ClaimButton)
 					returnFrame(w, frameId, imageUrl, "", btns)
-				} else if strings.Contains(value.Message, "limit") {
-					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712869076/nft_mint_limit_qaozs2.png"
-					var btns []frame.Button
-					btns = append(btns, frame.PromptButton)
-					returnFrame(w, frameId, imageUrl, "", btns)
 				} else {
-					imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712657526/account_not_elligible_qwieeq.png"
+					// imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712869076/nft_mint_limit_qaozs2.png"
+
+					imageGeneratorUrl := os.Getenv("OG_IMAGE_GENERATOR")
+					imageUrl := fmt.Sprintf("%v/frames/opengraph?text=%v&imgUrl=%v", imageGeneratorUrl, value.Message, drop.Image)
 					var btns []frame.Button
 					btns = append(btns, frame.PromptButton)
 					returnFrame(w, frameId, imageUrl, "", btns)
+					// } else {
+					// 	imageUrl = "https://res.cloudinary.com/ludicrousmouse/image/upload/v1712657526/account_not_elligible_qwieeq.png"
+					// 	var btns []frame.Button
+					// 	btns = append(btns, frame.PromptButton)
+					// 	returnFrame(w, frameId, imageUrl, "", btns)
 				}
 			} else if urlAction == "claim" {
 				button := frame.ClaimButton
@@ -356,3 +359,15 @@ func SetupDatabase() (*gorm.DB, error) {
 
 	return db, nil
 }
+
+// func parseFarcasterCriteria(farcasterCriteria frame.FarcasterCriteria) {
+// 	criterias := strings.Split(farcasterCriteria.CriteriaType, ",")
+// 	for _, criteria := range criterias {
+// 		switch criteria {
+// 		case "farcasterInteractions":
+// 			castUrl := farcasterCriteria.CastUrl
+// 		}
+// 	}
+// }
+
+// farcasterInteractions,farcasterFollowing,farcasterChannel
