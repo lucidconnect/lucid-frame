@@ -168,7 +168,7 @@ func frameHandler() http.HandlerFunc {
 			}
 
 			if drop.MintPrice != nil || !drop.GasIsCreatorSponsored {
-				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
+				frame.FrameToExternalClaim(w, imageUrl, *drop.AAContractAddress)
 			} else {
 				var btns []frame.Button
 				btns = append(btns, frameBtn)
@@ -265,6 +265,7 @@ func frameHandler() http.HandlerFunc {
 				btns = append(btns, frame.TransactionButton)
 				btns = append(btns, frame.PromptButton)
 				returnFrame(w, frameId, imageUrl, response, btns)
+			} else if urlAction == "mint" {
 			}
 		}
 	}
