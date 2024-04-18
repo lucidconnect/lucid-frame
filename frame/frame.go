@@ -218,7 +218,7 @@ func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
 	// 		</html>
 	// 		`, imageUrl, imageUrl, MintButton, redirectUrl)
 
-	target := fmt.Sprintf("eip155:8453:%v:1", id)
+	target := fmt.Sprintf("eip155:84532:%v:1", id)
 	frameMetadata := FrameMetaData{
 		Image: imageUrl,
 		Buttons: []FrameButton{
