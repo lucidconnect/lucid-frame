@@ -33,7 +33,7 @@ func getFrameHtml(frameMd FrameMetaData) string {
 		)
 
 		if v.Target != "" {
-			buttonTags = append(buttonTags, fmt.Sprintf(`<meta property="fc:frame:button:%v:target" content="%v" />`, buttonIdx, v.Action))
+			buttonTags = append(buttonTags, fmt.Sprintf(`<meta property="fc:frame:button:%v:target" content="%v" />`, buttonIdx, v.Target))
 		}
 	}
 
