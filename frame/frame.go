@@ -228,6 +228,7 @@ func FrameToExternalClaim(w http.ResponseWriter, imageUrl, id string) {
 				Target: target,
 			},
 		},
+		PostURL: "http://lucid-v2.vercel.app/drop/b5c15abf-cb60-4988-9144-65b817c70baf",
 	}
 	frame := getFrameHtml(frameMetadata)
 	fmt.Fprint(w, frame)
