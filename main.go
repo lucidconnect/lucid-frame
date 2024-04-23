@@ -167,14 +167,18 @@ func frameHandler() http.HandlerFunc {
 				frameBtn = frame.ClaimButton
 			}
 
-			if drop.MintPrice != nil || !drop.GasIsCreatorSponsored {
+			if !drop.GasIsCreatorSponsored {
 				frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
-			} else {
-				var btns []frame.Button
-				btns = append(btns, frameBtn)
-				returnFrame(w, frameId, imageUrl, "", btns)
 			}
 
+			if drop.MintPrice != nil {
+				if *drop.MintPrice > 0 {
+					frame.FrameToExternalClaim(w, imageUrl, drop.ID.String())
+				}
+			}
+			var btns []frame.Button
+			btns = append(btns, frameBtn)
+			returnFrame(w, frameId, imageUrl, "", btns)
 		case http.MethodPost:
 			frameReqBody := reqBody{}
 			err := json.NewDecoder(r.Body).Decode(&frameReqBody)
